@@ -77,7 +77,7 @@ export default function RoomDetailPage() {
   useEffect(() => {
     if (!room_id) return;
     const fetchData = async () => {
-      const API_BASE = 'http://139.196.142.3:8000/api/rooms';
+      const API_BASE = '/api/rooms';
       try {
         const [roomRes, chatRes, giftRes, pkRes] = await Promise.all([
             fetch(`${API_BASE}/${room_id}/detail`),

@@ -30,7 +30,7 @@ export default function AuthorDetailPage() {
     if (!sec_uid) return;
     const fetchRooms = async () => {
       try {
-        const res = await fetch(`http://139.196.142.3:8000/api/authors/${sec_uid}/rooms`);
+        const res = await fetch(`/api/authors/${sec_uid}/rooms`);
         if (res.ok) {
           const data = await res.json();
           setRooms(data);
