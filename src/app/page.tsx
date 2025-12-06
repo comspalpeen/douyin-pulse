@@ -11,7 +11,7 @@ export default function Home() {
     const fetchAuthors = async () => {
         try {
             // 🔧 【修复点】: 使用 127.0.0.1 代替 localhost，解决 Fetch Error
-            const res = await fetch('https://139.196.142.3:8000/api/authors');
+            const res = await fetch('http://139.196.142.3:8000/api/authors');
 
             if (!res.ok) {
                 throw new Error(`HTTP error! status: ${res.status}`);
