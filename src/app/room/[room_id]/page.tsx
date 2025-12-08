@@ -1,292 +1,399 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 
-// 1. 更新接口定义
+// --- 1. 类型定义 ---
 interface ChatMsg {
-  user_name: string;
-  content: string;
-  created_at: string;
-  fans_club_level: number;
-  avatar_url?: string;
-  gender?: number;            // 1男 2女
-  pay_grade_icon?: string;
-  fans_club_icon?: string;
-  sec_uid?: string;
+    user_name: string;
+    content: string;
+    avatar_url?: string;
+    sec_uid?: string;
+    gender?: number; 
+    pay_grade_icon?: string; 
+    fans_club_icon?: string; 
+    created_at?: string;
+    event_time?: string;
 }
 
 interface GiftMsg {
-  user_name: string;
-  gift_name: string;
-  total_diamond_count: number;
-  combo_count: number;
-  avatar_url?: string;
-  created_at: string;
-  gender?: number;
-  pay_grade_icon?: string;
-  fans_club_icon?: string;
-  sec_uid?: string;
-  gift_icon_url?: string;
+    user_name: string;
+    gift_name: string;
+    gift_icon_url?: string;
+    diamond_count: number;
+    total_diamond_count: number; // int32，JS number 可安全处理
+    combo_count: number;
+    group_count?: number;
+    avatar_url?: string;
+    sec_uid?: string;
+    gender?: number;
+    pay_grade_icon?: string; 
+    fans_club_icon?: string;
+    created_at?: string;
+    send_time?: string;
 }
 
-interface PKRecord {
-  battle_id: string;
-  mode: string;
-  start_time: string;
-  teams: {
-    team_id: string;
-    win_status: number;
-    anchors: {
-      nickname: string;
-      avatar: string;
-      score: number;
-    }[];
-  }[];
-}
-// 2. 辅助组件：性别图标
-const GenderBadge = ({ gender }: { gender?: number }) => {
-  if (gender === 1) {
-    // 男性图标 (蓝色)
-    return (
-      <span className="inline-flex items-center justify-center w-3.5 h-3.5 bg-blue-100 rounded-full mr-1 shrink-0">
-        <svg className="w-2.5 h-2.5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19 13a1 1 0 10-2 0 1 1 0 00-2 0v-1.586l-2.707 2.707A6.974 6.974 0 0013 18a7 7 0 100-14 6.975 6.975 0 003.879.828l2.707-2.707H18a1 1 0 100-2h4a1 1 0 001-1v4zM9 16a5 5 0 110-10 5 5 0 010 10z"></path></svg>
-      </span>
-    );
-  } else if (gender === 2) {
-    // 女性图标 (粉色)
-    return (
-      <span className="inline-flex items-center justify-center w-3.5 h-3.5 bg-pink-100 rounded-full mr-1 shrink-0">
-        <svg className="w-2.5 h-2.5 text-pink-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a7 7 0 100 14 7 7 0 000-14zm0 12a5 5 0 110-10 5 5 0 010 10zm0 3a1 1 0 011 1v2h2a1 1 0 110 2h-2v2a1 1 0 11-2 0v-2H9a1 1 0 110-2h2v-2a1 1 0 011-1z"></path></svg>
-      </span>
-    );
-  }
-  return null;
+// --- 2. 辅助组件 ---
+const GenderIcon = ({ gender }: { gender?: number }) => {
+    if (gender === 1) return <span className="inline-flex items-center justify-center w-3 h-3 ml-1 bg-blue-100 dark:bg-blue-900 rounded-full flex-shrink-0"><svg className="w-2 h-2 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M21 9c0-4.97-4.03-9-9-9s-9 4.03-9 9c0 4.632 3.501 8.443 8 8.941v2.059h-3v2h3v2h2v-2h3v-2h-3v-2.059c4.499-.498 8-4.309 8-8.941zm-16 0c0-3.86 3.14-7 7-7s7 3.14 7 7-3.14 7-7 7-7-3.14-7-7z"/></svg></span>;
+    if (gender === 2) return <span className="inline-flex items-center justify-center w-3 h-3 ml-1 bg-pink-100 dark:bg-pink-900 rounded-full flex-shrink-0"><svg className="w-2 h-2 text-pink-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2c-4.97 0-9 4.03-9 9 0 4.632 3.501 8.443 8 8.941v2.059h-3v2h3v2h2v-2h3v-2h-3v-2.059c4.499-.498 8-4.309 8-8.941 0-4.97-4.03-9-9-9zm0 14c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/></svg></span>;
+    return null;
 };
 
+const BadgeIcons = ({ msg }: { msg: ChatMsg | GiftMsg }) => {
+    return (
+        <div className="flex items-center gap-1 mr-1 flex-shrink-0">
+            {msg.pay_grade_icon && <img src={msg.pay_grade_icon} alt="level" className="h-4 w-auto object-contain" />}
+            {msg.fans_club_icon && <img src={msg.fans_club_icon} alt="fans" className="h-4 w-auto object-contain" />}
+        </div>
+    );
+};
+
+// --- 3. 主页面 ---
 export default function RoomDetailPage() {
-  const params = useParams();
-  const room_id = params.room_id as string;
+    const params = useParams();
+    const router = useRouter();
+    const room_id = params.room_id as string;
 
-  const [activeTab, setActiveTab] = useState<'chat' | 'gift'>('chat');
-  const [chats, setChats] = useState<ChatMsg[]>([]);
-  const [gifts, setGifts] = useState<GiftMsg[]>([]);
-  const [pks, setPks] = useState<PKRecord[]>([]);
-  const [roomInfo, setRoomInfo] = useState<any>(null);
+    // 数据状态
+    const [chats, setChats] = useState<ChatMsg[]>([]);
+    const [gifts, setGifts] = useState<GiftMsg[]>([]);
+    
+    // 加载状态
+    const [loadingChats, setLoadingChats] = useState(false);
+    const [loadingGifts, setLoadingGifts] = useState(false);
+    const [hasMoreChats, setHasMoreChats] = useState(true);
+    const [hasMoreGifts, setHasMoreGifts] = useState(true);
 
-  useEffect(() => {
-    if (!room_id) return;
-    const fetchData = async () => {
-      const API_BASE = '/api/rooms';
-      try {
-        const [roomRes, chatRes, giftRes, pkRes] = await Promise.all([
-            fetch(`${API_BASE}/${room_id}/detail`),
-            fetch(`${API_BASE}/${room_id}/chats`),
-            fetch(`${API_BASE}/${room_id}/gifts`),
-            fetch(`${API_BASE}/${room_id}/pks`)
-        ]);
+    // 搜索与过滤状态
+    const [minPrice, setMinPrice] = useState<number>(100);
+    const [enableMinPrice, setEnableMinPrice] = useState<boolean>(false);
+    
+    // inputSearch: 输入框里的内容
+    // appliedSearch: 真正生效的搜索词 (点击搜索按钮后才更新)
+    const [inputSearch, setInputSearch] = useState<string>(""); 
+    const [appliedSearch, setAppliedSearch] = useState<string>(""); 
 
-        if (roomRes.ok) setRoomInfo(await roomRes.json());
-        if (chatRes.ok) setChats(await chatRes.json());
-        if (giftRes.ok) setGifts(await giftRes.json());
-        if (pkRes.ok) setPks(await pkRes.json());
-      } catch (e) {
-        console.error("加载数据失败", e);
-      }
+    // 标记是否正在进行搜索重置（防止重置期间轮询插入数据）
+    const [isResetting, setIsResetting] = useState<boolean>(false); 
+
+    const goToProfile = (e: React.MouseEvent, sec_uid?: string) => {
+        e.stopPropagation();
+        if (sec_uid) window.open(`https://www.douyin.com/user/${sec_uid}`, '_blank');
     };
-    fetchData();
-  }, [room_id]);
 
-  const formatTime = (ts: string) => new Date(ts).toLocaleTimeString('zh-CN', { hour12: false });
+    // ✅ 点击搜索按钮：更新 appliedSearch，触发 useEffect 进行重置
+    const handleSearch = () => {
+        if (inputSearch !== appliedSearch) {
+            setAppliedSearch(inputSearch);
+        }
+    };
 
-  // 3. 通用跳转函数
-  const goToUser = (e: React.MouseEvent, sec_uid?: string) => {
-    e.stopPropagation();
-    if (sec_uid) {
-        window.open(`https://www.douyin.com/user/${sec_uid}`, '_blank');
-    }
-  };
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') handleSearch();
+    };
 
-  return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-950 p-4 h-screen flex flex-col">
-      <header className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm mb-4 flex justify-between items-center shrink-0">
-         <div>
-            <h1 className="text-xl font-bold text-gray-800 dark:text-white">
-                {roomInfo?.title || '直播详情'}
-            </h1>
-            <p className="text-xs text-gray-500 mt-1">Room ID: {room_id}</p>
-         </div>
-         <div className="text-right">
-             <div className="text-2xl font-bold text-blue-600">{roomInfo?.max_viewers || 0}</div>
-             <div className="text-xs text-gray-400">最高在线</div>
-         </div>
-      </header>
+    // --- 核心工具：构造参数 ---
+    // 这个函数保证了无论是“加载历史”还是“实时轮询”，都使用完全一致的过滤条件
+    const getApiParams = useCallback((baseLimit: number) => {
+        let params = `limit=${baseLimit}`;
+        if (appliedSearch) params += `&keyword=${encodeURIComponent(appliedSearch)}`;
+        if (enableMinPrice && minPrice > 0) params += `&min_price=${minPrice}`;
+        return params;
+    }, [appliedSearch, enableMinPrice, minPrice]);
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 overflow-hidden">
-        
-        {/* 左侧：弹幕与礼物 */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
-            <div className="flex border-b border-gray-200 dark:border-gray-700">
-                <button 
-                    onClick={() => setActiveTab('chat')}
-                    className={`flex-1 py-3 text-sm font-bold transition-colors ${activeTab === 'chat' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                    💬 弹幕 ({chats.length})
-                </button>
-                <button 
-                    onClick={() => setActiveTab('gift')}
-                    className={`flex-1 py-3 text-sm font-bold transition-colors ${activeTab === 'gift' ? 'text-pink-600 border-b-2 border-pink-600 bg-pink-50/50' : 'text-gray-500 hover:bg-gray-50'}`}
-                >
-                    🎁 礼物 ({gifts.length})
-                </button>
-            </div>
+    // --- 1. 加载历史 (向上滚动) ---
+    const loadOldChats = async () => {
+        if (loadingChats || !hasMoreChats) return;
+        setLoadingChats(true);
+        try {
+            let url = `/api/rooms/${room_id}/chats?${getApiParams(50)}`;
+            if (chats.length > 0) {
+                const oldest = chats[chats.length - 1];
+                const time = oldest.created_at || oldest.event_time;
+                if (time) url += `&before_time=${time}`;
+            }
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                {activeTab === 'chat' ? (
-                    // --- 渲染弹幕 ---
-                    chats.map((msg, i) => (
-                        <div key={i} className="flex gap-3 group">
-                            {/* 头像 */}
-                            <div className="flex-shrink-0 cursor-pointer" onClick={(e) => goToUser(e, msg.sec_uid)}>
-                                <img 
-                                    src={msg.avatar_url || '/default-avatar.png'} 
-                                    className="w-10 h-10 rounded-full border border-gray-200 dark:border-gray-600 object-cover" 
-                                    alt="avatar" 
-                                />
+            const res = await fetch(url);
+            const newBatch = await res.json();
+            if (newBatch.length < 50) setHasMoreChats(false);
+            setChats(prev => [...prev, ...newBatch]);
+        } finally {
+            setLoadingChats(false);
+        }
+    };
+
+    const loadOldGifts = async () => {
+        if (loadingGifts || !hasMoreGifts) return;
+        setLoadingGifts(true);
+        try {
+            let url = `/api/rooms/${room_id}/gifts?${getApiParams(50)}`;
+            if (gifts.length > 0) {
+                const oldest = gifts[gifts.length - 1];
+                const time = oldest.created_at || oldest.send_time;
+                if (time) url += `&before_time=${time}`;
+            }
+
+            const res = await fetch(url);
+            const newBatch = await res.json();
+            if (newBatch.length < 50) setHasMoreGifts(false);
+            setGifts(prev => [...prev, ...newBatch]);
+        } finally {
+            setLoadingGifts(false);
+        }
+    };
+
+    // --- 2. 实时轮询 (Realtime) ---
+    // ✅ 关键修复：依赖项包含 getApiParams。当搜索条件变了，这个函数会重建，定时器也会重置。
+    // 这样保证了永远只拉取“符合当前搜索条件”的新数据。
+    const fetchNewRealtime = useCallback(async () => {
+        if (isResetting) return; // 正在重置列表时，暂停轮询
+
+        try {
+            const chatUrl = `/api/rooms/${room_id}/chats?${getApiParams(20)}`;
+            const giftUrl = `/api/rooms/${room_id}/gifts?${getApiParams(20)}`;
+
+            const [cRes, gRes] = await Promise.all([fetch(chatUrl), fetch(giftUrl)]);
+            const newChats = await cRes.json();
+            const newGifts = await gRes.json();
+
+            // 合并逻辑：只添加比列表顶部更新的数据
+            if (newChats.length > 0) {
+                setChats(prev => {
+                    // 如果当前列表被清空了(搜索中)，直接展示新数据
+                    if (prev.length === 0) return newChats;
+                    
+                    const topTime = new Date(prev[0].created_at!).getTime();
+                    // 严格过滤：必须是更新的时间
+                    const reallyNew = newChats.filter((c: ChatMsg) => new Date(c.created_at!).getTime() > topTime);
+                    return [...reallyNew, ...prev];
+                });
+            }
+            if (newGifts.length > 0) {
+                setGifts(prev => {
+                    if (prev.length === 0) return newGifts;
+                    
+                    const topTime = new Date(prev[0].created_at!).getTime();
+                    const reallyNew = newGifts.filter((g: GiftMsg) => new Date(g.created_at!).getTime() > topTime);
+                    return [...reallyNew, ...prev];
+                });
+            }
+        } catch (e) { console.error(e); }
+    }, [room_id, getApiParams, isResetting]); 
+
+    // --- Effect: 当“生效的搜索词”或“价格过滤”改变时，重置列表 ---
+    useEffect(() => {
+        const resetData = async () => {
+            setIsResetting(true); // 🔒 锁住轮询
+            setChats([]);
+            setGifts([]);
+            setHasMoreChats(true);
+            setHasMoreGifts(true);
+
+            try {
+                // 立即请求第一页数据 (带着新的搜索参数)
+                const chatUrl = `/api/rooms/${room_id}/chats?${getApiParams(50)}`;
+                const giftUrl = `/api/rooms/${room_id}/gifts?${getApiParams(50)}`;
+
+                const [cRes, gRes] = await Promise.all([fetch(chatUrl), fetch(giftUrl)]);
+                const cData = await cRes.json();
+                const gData = await gRes.json();
+
+                setChats(cData);
+                setGifts(gData);
+            } finally {
+                setIsResetting(false); // 🔓 解锁轮询
+            }
+        };
+
+        resetData();
+    }, [appliedSearch, minPrice, enableMinPrice, room_id, getApiParams]);
+
+    // --- Effect: 定时器 ---
+    useEffect(() => {
+        const interval = setInterval(fetchNewRealtime, 3000);
+        return () => clearInterval(interval);
+    }, [fetchNewRealtime]);
+
+    // 滚动监听
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>, type: 'chat' | 'gift') => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+        if (scrollHeight - scrollTop - clientHeight < 50) {
+            type === 'chat' ? loadOldChats() : loadOldGifts();
+        }
+    };
+
+    const formatTime = (t?: string) => t ? new Date(t).toLocaleTimeString('zh-CN', {hour12:false}) : '';
+
+    return (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col h-screen overflow-hidden">
+             {/* Header */}
+             <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-3 shadow-sm z-10">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => router.back()} className="text-xl hover:bg-gray-100 p-1 rounded dark:text-white dark:hover:bg-gray-800">←</button>
+                        <h1 className="font-bold text-gray-900 dark:text-white">控制台</h1>
+                        {appliedSearch && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">过滤中: {appliedSearch}</span>}
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-1 md:justify-end">
+                        {/* 搜索框 */}
+                        <div className="flex gap-1 w-full md:w-auto">
+                            <input 
+                                type="text" 
+                                className="block w-full md:w-60 p-2 pl-3 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white" 
+                                placeholder="搜索 用户/内容/礼物..." 
+                                value={inputSearch}
+                                onChange={(e) => setInputSearch(e.target.value)}
+                                onKeyDown={handleKeyDown}
+                            />
+                            <button 
+                                onClick={handleSearch}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg whitespace-nowrap"
+                            >
+                                搜索
+                            </button>
+                        </div>
+
+                        {/* 价格过滤器 (勾选才生效) */}
+                        <div className={`flex items-center rounded-lg px-2 border h-[38px] transition-colors ${enableMinPrice ? 'bg-pink-50 border-pink-200 dark:bg-pink-900/20 dark:border-pink-800' : 'bg-gray-100 border-gray-200 dark:bg-gray-800 dark:border-gray-700'}`}>
+                            <input 
+                                type="checkbox"
+                                checked={enableMinPrice}
+                                onChange={(e) => setEnableMinPrice(e.target.checked)}
+                                className="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mr-2 cursor-pointer"
+                            />
+                            <span className={`text-xs mr-2 whitespace-nowrap ${enableMinPrice ? 'text-pink-600 font-bold' : 'text-gray-500'}`}>≥</span>
+                            <input 
+                                type="number" 
+                                className={`w-16 bg-transparent border-none text-sm focus:ring-0 p-1 text-right font-bold outline-none ${enableMinPrice ? 'text-pink-600' : 'text-gray-400'}`}
+                                value={minPrice}
+                                min={0}
+                                disabled={!enableMinPrice}
+                                onChange={(e) => setMinPrice(Number(e.target.value))}
+                            />
+                            <span className="text-xs ml-1 text-gray-400">💎</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main className="flex-1 max-w-7xl w-full mx-auto p-2 md:p-4 grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden">
+                
+                {/* 弹幕区 */}
+                <div className="md:col-span-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden">
+                    <div className="p-3 border-b bg-gray-50 dark:bg-gray-800/50 font-semibold flex justify-between">
+                        <span className="text-gray-900 dark:text-gray-100">💬 实时弹幕</span>
+                        {appliedSearch && <span className="text-xs text-blue-500">结果已过滤</span>}
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar" onScroll={(e) => handleScroll(e, 'chat')}>
+                        {chats.map((msg, idx) => (
+                            <div key={idx} className="flex gap-3 group hover:bg-gray-50 dark:hover:bg-gray-800/50 p-2 rounded-lg transition-colors border-b border-gray-50 dark:border-gray-800/50 last:border-0">
+                                <div className="relative flex-shrink-0">
+                                    <img 
+                                        src={msg.avatar_url || '/default-avatar.png'} 
+                                        className="w-10 h-10 rounded-full bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity border border-transparent hover:border-blue-400"
+                                        onClick={(e) => goToProfile(e, msg.sec_uid)}
+                                        alt="avatar"
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center flex-wrap gap-y-1 mb-1">
+                                        <BadgeIcons msg={msg} />
+                                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300 truncate cursor-pointer hover:text-blue-500" onClick={(e) => goToProfile(e, msg.sec_uid)}>
+                                            {msg.user_name}
+                                        </span>
+                                        <GenderIcon gender={msg.gender} />
+                                        <span className="text-xs text-gray-300 ml-auto whitespace-nowrap pl-2">
+                                            {formatTime(msg.created_at || msg.event_time)}
+                                        </span>
+                                    </div>
+                                    <div className="text-sm text-gray-800 dark:text-gray-200 break-words leading-relaxed">
+                                        {msg.content}
+                                    </div>
+                                </div>
                             </div>
-                            
-                            <div className="flex-1 min-w-0">
-                                {/* 用户名行：性别 + 徽章 + 名字 */}
-                                <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                                    <GenderBadge gender={msg.gender} />
-                                    
-                                    {/* 消费等级图标 */}
-                                    {msg.pay_grade_icon && (
-                                        <img src={msg.pay_grade_icon} className="h-4 w-auto object-contain" alt="lv" />
-                                    )}
+                        ))}
+                        {loadingChats && <div className="py-2 text-center text-xs text-gray-400">加载中...</div>}
+                        {chats.length === 0 && !loadingChats && <div className="py-10 text-center text-gray-400">无搜索结果</div>}
+                    </div>
+                </div>
 
-                                    {/* 粉丝团等级 */}
-                                    {msg.fans_club_level > 0 && (
-                                        <div className="flex items-center bg-gray-800 rounded px-1 h-4 relative overflow-hidden shrink-0" title={`粉丝团等级 ${msg.fans_club_level}`}>
-                                            {msg.fans_club_icon && <img src={msg.fans_club_icon} className="h-3 w-3 mr-0.5 object-contain" alt="club" />}
-                                            <span className="text-[10px] text-white font-bold leading-none">{msg.fans_club_level}</span>
+                {/* 礼物区 */}
+                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden">
+                    <div className="p-3 border-b bg-gray-50 dark:bg-gray-800/50 font-semibold text-gray-900 dark:text-gray-100 flex justify-between">
+                        <span>🎁 礼物记录</span>
+                        {enableMinPrice && <span className="text-xs text-pink-500">过滤 ≥ {minPrice}</span>}
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar bg-gray-50/30 dark:bg-black/20" onScroll={(e) => handleScroll(e, 'gift')}>
+                         {gifts.map((gift, idx) => {
+                            const isBig = gift.total_diamond_count >= 100;
+                            // 显示总数量 (int32 安全)
+                            const displayCount = gift.combo_count * (gift.group_count || 1);
+
+                            return (
+                                <div key={idx} className={`p-3 rounded-xl border ${isBig ? 'bg-pink-50 border-pink-200 dark:bg-pink-900/20' : 'bg-white border-gray-100 dark:bg-gray-800'} transition-all`}>
+                                    <div className="flex justify-between items-start mb-2 border-b border-black/5 dark:border-white/5 pb-2">
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                            <img 
+                                                src={gift.avatar_url} 
+                                                className="w-6 h-6 rounded-full bg-gray-200 flex-shrink-0 cursor-pointer"
+                                                onClick={(e) => goToProfile(e, gift.sec_uid)}
+                                                alt="avatar"
+                                            />
+                                            <div className="min-w-0 flex items-center gap-1">
+                                                 <span 
+                                                    className="text-xs font-bold truncate text-gray-700 dark:text-gray-300 cursor-pointer hover:text-blue-500"
+                                                    onClick={(e) => goToProfile(e, gift.sec_uid)}
+                                                 >
+                                                    {gift.user_name}
+                                                 </span>
+                                                 <BadgeIcons msg={gift} />
+                                                 <GenderIcon gender={gift.gender} />
+                                            </div>
                                         </div>
-                                    )}
-
-                                    {/* 可点击的用户名 */}
-                                    <span 
-                                        onClick={(e) => goToUser(e, msg.sec_uid)}
-                                        className="text-sm font-bold text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer truncate"
-                                    >
-                                        {msg.user_name}
-                                    </span>
+                                        <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">
+                                            {formatTime(gift.created_at)}
+                                        </span>
+                                    </div>
                                     
-                                    <span className="text-[10px] text-gray-300 ml-auto whitespace-nowrap">{formatTime(msg.created_at)}</span>
-                                </div>
-                                
-                                {/* 弹幕内容 */}
-                                <div className="text-sm text-gray-800 dark:text-gray-100 break-all leading-relaxed bg-gray-50 dark:bg-gray-700/50 p-2 rounded-r-lg rounded-bl-lg inline-block">
-                                    {msg.content}
-                                </div>
-                            </div>
-                        </div>
-                    ))
-                ) : (
-                    // --- 渲染礼物 ---
-                    gifts.map((gift, i) => (
-                        <div key={i} className="flex gap-3 relative overflow-hidden bg-pink-50/30 dark:bg-pink-900/10 p-2 rounded-lg border border-pink-100 dark:border-pink-900/30">
-                            {/* 头像 */}
-                            <div className="flex-shrink-0 cursor-pointer" onClick={(e) => goToUser(e, gift.sec_uid)}>
-                                <img 
-                                    src={gift.avatar_url || '/default-avatar.png'} 
-                                    className="w-10 h-10 rounded-full border-2 border-pink-200 dark:border-pink-800 object-cover" 
-                                    alt="avatar"
-                                />
-                            </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            {gift.gift_icon_url ? (
+                                                <img src={gift.gift_icon_url} className="w-10 h-10 object-contain" alt="gift" />
+                                            ) : (
+                                                <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center text-xs text-gray-400">无图</div>
+                                            )}
+                                            <div className="flex flex-col justify-center">
+                                                <div className="flex items-baseline gap-2">
+                                                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                                        {gift.gift_name}
+                                                    </span>
+                                                    <span className="text-xl font-bold text-orange-500 italic">
+                                                        x{displayCount}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                            <div className="flex-1 z-10 min-w-0">
-                                {/* 用户名行 */}
-                                <div className="flex items-center gap-1.5 mb-1">
-                                    <GenderBadge gender={gift.gender} />
-                                    {gift.pay_grade_icon && <img src={gift.pay_grade_icon} className="h-4 w-auto object-contain" alt="lv" />}
-                                    <span 
-                                        onClick={(e) => goToUser(e, gift.sec_uid)}
-                                        className="text-sm font-bold text-gray-700 dark:text-gray-200 hover:text-pink-600 cursor-pointer truncate"
-                                    >
-                                        {gift.user_name}
-                                    </span>
-                                    <span className="text-xs text-gray-400 ml-auto whitespace-nowrap">{formatTime(gift.created_at)}</span>
-                                </div>
-
-                                {/* 礼物详情行 */}
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-500 shrink-0">送出</span>
-                                    <span className="text-sm font-bold text-pink-600 truncate">{gift.gift_name}</span>
-                                    
-                                    {/* 礼物图标 */}
-                                    {gift.gift_icon_url && (
-                                        <img src={gift.gift_icon_url} className="w-8 h-8 object-contain animate-bounce-short shrink-0" alt="gift" />
-                                    )}
-
-                                    <div className="flex flex-col ml-auto text-right shrink-0">
-                                        <span className="text-lg font-black text-pink-500 italic">x{gift.combo_count}</span>
-                                        <span className="text-[10px] text-gray-400">💎{gift.total_diamond_count}</span>
+                                        <div className="flex flex-col items-end">
+                                            <div className="flex items-baseline gap-0.5">
+                                                <span className="text-xs text-pink-400">💎</span>
+                                                <span className="text-2xl font-black text-pink-500 italic leading-none">
+                                                    {gift.total_diamond_count}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
-        </div>
-
-        {/* 右侧：PK 历史记录 */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700">
-            <div className="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30">
-                <h3 className="font-bold text-gray-700 dark:text-gray-200">⚔️ PK 对战记录 ({pks.length})</h3>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                {pks.map((pk, i) => (
-                    <div key={i} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 bg-gray-50/50 dark:bg-gray-800">
-                        <div className="flex justify-between text-xs text-gray-400 mb-2">
-                            <span>🕒 {new Date(pk.start_time).toLocaleString()}</span>
-                            <span className="uppercase px-1.5 py-0.5 bg-gray-200 dark:bg-gray-600 rounded text-gray-600 dark:text-gray-300">
-                                {pk.mode}
-                            </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                            {pk.teams.map((team, tIdx) => (
-                                <div key={tIdx} className={`flex-1 flex flex-col items-center p-2 rounded ${
-                                    team.win_status === 1 ? 'bg-red-50 dark:bg-red-900/20 border border-red-100' : 
-                                    team.win_status === 2 ? 'bg-gray-100 dark:bg-gray-700 opacity-80' : ''
-                                }`}>
-                                    <div className="flex -space-x-2 mb-1">
-                                        {team.anchors.map((anchor, aIdx) => (
-                                             <img key={aIdx} src={anchor.avatar} className="w-8 h-8 rounded-full border-2 border-white object-cover" title={anchor.nickname} alt={anchor.nickname} />
-                                        ))}
-                                    </div>
-                                    <div className="font-bold text-lg text-gray-800 dark:text-gray-200">
-                                        {team.anchors.reduce((acc, curr) => acc + curr.score, 0).toLocaleString()}
-                                    </div>
-                                    {team.win_status === 1 && <span className="text-xs text-red-500 font-bold">WIN</span>}
-                                </div>
-                            ))}
-                            {pk.teams.length === 2 && (
-                                <div className="font-black text-gray-300 italic text-xl">VS</div>
-                            )}
-                        </div>
+                            );
+                        })}
+                        {loadingGifts && <div className="py-2 text-center text-xs text-gray-400">加载中...</div>}
+                        {gifts.length === 0 && !loadingGifts && <div className="py-10 text-center text-gray-400">无搜索结果</div>}
                     </div>
-                ))}
-                {pks.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                        <div className="text-4xl mb-2">🏳️</div>
-                        <p>本场直播无 PK 记录</p>
-                    </div>
-                )}
-            </div>
+                </div>
+            </main>
         </div>
-
-      </div>
-    </div>
-  );
+    );
 }
