@@ -2,38 +2,20 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+// ✅ 新增：引入类型
+import { ChatMsg, GiftMsg, SearchTarget } from '@/types/room';
 
-// --- 1. 类型定义 ---
-interface ChatMsg {
-    user_name: string;
-    content: string;
-    avatar_url?: string;
-    sec_uid?: string;
-    gender?: number; 
-    pay_grade_icon?: string; 
-    fans_club_icon?: string; 
-    created_at?: string;
-    event_time?: string;
+// --- 辅助 Hook ---
+function useDebounce<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+        const handler = setTimeout(() => setDebouncedValue(value), delay);
+        return () => clearTimeout(handler);
+    }, [value, delay]);
+    return debouncedValue;
 }
 
-interface GiftMsg {
-    user_name: string;
-    gift_name: string;
-    gift_icon_url?: string;
-    diamond_count: number;
-    total_diamond_count: number; // int32，JS number 可安全处理
-    combo_count: number;
-    group_count?: number;
-    avatar_url?: string;
-    sec_uid?: string;
-    gender?: number;
-    pay_grade_icon?: string; 
-    fans_club_icon?: string;
-    created_at?: string;
-    send_time?: string;
-}
-
-// --- 2. 辅助组件 ---
+// --- 图标组件 ---
 const GenderIcon = ({ gender }: { gender?: number }) => {
     if (gender === 1) return <span className="inline-flex items-center justify-center w-3 h-3 ml-1 bg-blue-100 dark:bg-blue-900 rounded-full flex-shrink-0"><svg className="w-2 h-2 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M21 9c0-4.97-4.03-9-9-9s-9 4.03-9 9c0 4.632 3.501 8.443 8 8.941v2.059h-3v2h3v2h2v-2h3v-2h-3v-2.059c4.499-.498 8-4.309 8-8.941zm-16 0c0-3.86 3.14-7 7-7s7 3.14 7 7-3.14 7-7 7-7-3.14-7-7z"/></svg></span>;
     if (gender === 2) return <span className="inline-flex items-center justify-center w-3 h-3 ml-1 bg-pink-100 dark:bg-pink-900 rounded-full flex-shrink-0"><svg className="w-2 h-2 text-pink-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2c-4.97 0-9 4.03-9 9 0 4.632 3.501 8.443 8 8.941v2.059h-3v2h3v2h2v-2h3v-2h-3v-2.059c4.499-.498 8-4.309 8-8.941 0-4.97-4.03-9-9-9zm0 14c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/></svg></span>;
@@ -49,40 +31,39 @@ const BadgeIcons = ({ msg }: { msg: ChatMsg | GiftMsg }) => {
     );
 };
 
-// --- 3. 主页面 ---
+// --- 主页面 ---
 export default function RoomDetailPage() {
     const params = useParams();
     const router = useRouter();
     const room_id = params.room_id as string;
 
-    // 数据状态
+    // --- 独立的状态管理 ---
     const [chats, setChats] = useState<ChatMsg[]>([]);
     const [gifts, setGifts] = useState<GiftMsg[]>([]);
     
-    // 加载状态
+    // 独立的加载 Loading
     const [loadingChats, setLoadingChats] = useState(false);
     const [loadingGifts, setLoadingGifts] = useState(false);
+    
+    // 独立的“更多”标记
     const [hasMoreChats, setHasMoreChats] = useState(true);
     const [hasMoreGifts, setHasMoreGifts] = useState(true);
 
-    // 搜索与过滤状态
-    const [minPrice, setMinPrice] = useState<number>(100);
-    const [enableMinPrice, setEnableMinPrice] = useState<boolean>(false);
-    
-    // inputSearch: 输入框里的内容
-    // appliedSearch: 真正生效的搜索词 (点击搜索按钮后才更新)
+    // --- 搜索与过滤 ---
+    const [searchTarget, setSearchTarget] = useState<SearchTarget>('all');
     const [inputSearch, setInputSearch] = useState<string>(""); 
     const [appliedSearch, setAppliedSearch] = useState<string>(""); 
-
-    // 标记是否正在进行搜索重置（防止重置期间轮询插入数据）
-    const [isResetting, setIsResetting] = useState<boolean>(false); 
+    
+    // 礼物专用过滤
+    const [minPriceInput, setMinPriceInput] = useState<number>(10);
+    const [enableMinPrice, setEnableMinPrice] = useState<boolean>(false);
+    const debouncedMinPrice = useDebounce(minPriceInput, 500);
 
     const goToProfile = (e: React.MouseEvent, sec_uid?: string) => {
         e.stopPropagation();
         if (sec_uid) window.open(`https://www.douyin.com/user/${sec_uid}`, '_blank');
     };
 
-    // ✅ 点击搜索按钮：更新 appliedSearch，触发 useEffect 进行重置
     const handleSearch = () => {
         if (inputSearch !== appliedSearch) {
             setAppliedSearch(inputSearch);
@@ -93,27 +74,43 @@ export default function RoomDetailPage() {
         if (e.key === 'Enter') handleSearch();
     };
 
-    // --- 核心工具：构造参数 ---
-    // 这个函数保证了无论是“加载历史”还是“实时轮询”，都使用完全一致的过滤条件
-    const getApiParams = useCallback((baseLimit: number) => {
-        let params = `limit=${baseLimit}`;
-        if (appliedSearch) params += `&keyword=${encodeURIComponent(appliedSearch)}`;
-        if (enableMinPrice && minPrice > 0) params += `&min_price=${minPrice}`;
-        return params;
-    }, [appliedSearch, enableMinPrice, minPrice]);
+    // --- 核心工具：独立的 URL 参数生成器 ---
+    
+    // 生成弹幕 API 参数
+    const getChatParams = (limit: number) => {
+        let p = `limit=${limit}`;
+        // 只有当目标是 all 或 chat 时，才加上关键词
+        if (appliedSearch && (searchTarget === 'all' || searchTarget === 'chat')) {
+            p += `&keyword=${encodeURIComponent(appliedSearch)}`;
+        }
+        return p;
+    };
 
-    // --- 1. 加载历史 (向上滚动) ---
+    // 生成礼物 API 参数
+    const getGiftParams = (limit: number) => {
+        let p = `limit=${limit}`;
+        // 只有当目标是 all 或 gift 时，才加上关键词
+        if (appliedSearch && (searchTarget === 'all' || searchTarget === 'gift')) {
+            p += `&keyword=${encodeURIComponent(appliedSearch)}`;
+        }
+        // 价格过滤永远生效 (如果勾选了)
+        if (enableMinPrice && debouncedMinPrice >= 0) {
+            p += `&min_price=${debouncedMinPrice + 1}`;
+        }
+        return p;
+    };
+
+    // --- 1. 历史加载 (Scroll Up) ---
     const loadOldChats = async () => {
         if (loadingChats || !hasMoreChats) return;
         setLoadingChats(true);
         try {
-            let url = `/api/rooms/${room_id}/chats?${getApiParams(50)}`;
+            let url = `/api/rooms/${room_id}/chats?${getChatParams(50)}`;
             if (chats.length > 0) {
                 const oldest = chats[chats.length - 1];
                 const time = oldest.created_at || oldest.event_time;
                 if (time) url += `&before_time=${time}`;
             }
-
             const res = await fetch(url);
             const newBatch = await res.json();
             if (newBatch.length < 50) setHasMoreChats(false);
@@ -127,13 +124,12 @@ export default function RoomDetailPage() {
         if (loadingGifts || !hasMoreGifts) return;
         setLoadingGifts(true);
         try {
-            let url = `/api/rooms/${room_id}/gifts?${getApiParams(50)}`;
+            let url = `/api/rooms/${room_id}/gifts?${getGiftParams(50)}`;
             if (gifts.length > 0) {
                 const oldest = gifts[gifts.length - 1];
                 const time = oldest.created_at || oldest.send_time;
                 if (time) url += `&before_time=${time}`;
             }
-
             const res = await fetch(url);
             const newBatch = await res.json();
             if (newBatch.length < 50) setHasMoreGifts(false);
@@ -144,78 +140,82 @@ export default function RoomDetailPage() {
     };
 
     // --- 2. 实时轮询 (Realtime) ---
-    // ✅ 关键修复：依赖项包含 getApiParams。当搜索条件变了，这个函数会重建，定时器也会重置。
-    // 这样保证了永远只拉取“符合当前搜索条件”的新数据。
-    const fetchNewRealtime = useCallback(async () => {
-        if (isResetting) return; // 正在重置列表时，暂停轮询
+    const fetchRealtime = useCallback(async () => {
+        const chatUrl = `/api/rooms/${room_id}/chats?${getChatParams(20)}`;
+        const giftUrl = `/api/rooms/${room_id}/gifts?${getGiftParams(20)}`;
 
         try {
-            const chatUrl = `/api/rooms/${room_id}/chats?${getApiParams(20)}`;
-            const giftUrl = `/api/rooms/${room_id}/gifts?${getApiParams(20)}`;
-
             const [cRes, gRes] = await Promise.all([fetch(chatUrl), fetch(giftUrl)]);
             const newChats = await cRes.json();
             const newGifts = await gRes.json();
 
-            // 合并逻辑：只添加比列表顶部更新的数据
+            // 更新弹幕
             if (newChats.length > 0) {
                 setChats(prev => {
-                    // 如果当前列表被清空了(搜索中)，直接展示新数据
                     if (prev.length === 0) return newChats;
-                    
                     const topTime = new Date(prev[0].created_at!).getTime();
-                    // 严格过滤：必须是更新的时间
                     const reallyNew = newChats.filter((c: ChatMsg) => new Date(c.created_at!).getTime() > topTime);
                     return [...reallyNew, ...prev];
                 });
             }
+
+            // 更新礼物
             if (newGifts.length > 0) {
                 setGifts(prev => {
                     if (prev.length === 0) return newGifts;
-                    
                     const topTime = new Date(prev[0].created_at!).getTime();
                     const reallyNew = newGifts.filter((g: GiftMsg) => new Date(g.created_at!).getTime() > topTime);
                     return [...reallyNew, ...prev];
                 });
             }
         } catch (e) { console.error(e); }
-    }, [room_id, getApiParams, isResetting]); 
+    }, [room_id, appliedSearch, searchTarget, enableMinPrice, debouncedMinPrice]); 
 
-    // --- Effect: 当“生效的搜索词”或“价格过滤”改变时，重置列表 ---
+    // --- 3. 分离的副作用 ---
+
+    // Effect A: 弹幕重置
     useEffect(() => {
-        const resetData = async () => {
-            setIsResetting(true); // 🔒 锁住轮询
+        const resetChats = async () => {
             setChats([]);
-            setGifts([]);
             setHasMoreChats(true);
-            setHasMoreGifts(true);
-
+            setLoadingChats(true);
             try {
-                // 立即请求第一页数据 (带着新的搜索参数)
-                const chatUrl = `/api/rooms/${room_id}/chats?${getApiParams(50)}`;
-                const giftUrl = `/api/rooms/${room_id}/gifts?${getApiParams(50)}`;
-
-                const [cRes, gRes] = await Promise.all([fetch(chatUrl), fetch(giftUrl)]);
-                const cData = await cRes.json();
-                const gData = await gRes.json();
-
-                setChats(cData);
-                setGifts(gData);
+                const url = `/api/rooms/${room_id}/chats?${getChatParams(50)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                setChats(data);
             } finally {
-                setIsResetting(false); // 🔓 解锁轮询
+                setLoadingChats(false);
             }
         };
+        resetChats();
+    }, [appliedSearch, searchTarget, room_id]);
 
-        resetData();
-    }, [appliedSearch, minPrice, enableMinPrice, room_id, getApiParams]);
-
-    // --- Effect: 定时器 ---
+    // Effect B: 礼物重置
     useEffect(() => {
-        const interval = setInterval(fetchNewRealtime, 3000);
-        return () => clearInterval(interval);
-    }, [fetchNewRealtime]);
+        const resetGifts = async () => {
+            setGifts([]);
+            setHasMoreGifts(true);
+            setLoadingGifts(true);
+            try {
+                const url = `/api/rooms/${room_id}/gifts?${getGiftParams(50)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                setGifts(data);
+            } finally {
+                setLoadingGifts(false);
+            }
+        };
+        resetGifts();
+    }, [appliedSearch, searchTarget, enableMinPrice, debouncedMinPrice, room_id]);
 
-    // 滚动监听
+    // Effect C: 轮询
+    useEffect(() => {
+        const interval = setInterval(fetchRealtime, 3000);
+        return () => clearInterval(interval);
+    }, [fetchRealtime]);
+
+    // 滚动处理
     const handleScroll = (e: React.UIEvent<HTMLDivElement>, type: 'chat' | 'gift') => {
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
         if (scrollHeight - scrollTop - clientHeight < 50) {
@@ -233,46 +233,54 @@ export default function RoomDetailPage() {
                     <div className="flex items-center gap-3">
                         <button onClick={() => router.back()} className="text-xl hover:bg-gray-100 p-1 rounded dark:text-white dark:hover:bg-gray-800">←</button>
                         <h1 className="font-bold text-gray-900 dark:text-white">控制台</h1>
-                        {appliedSearch && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">过滤中: {appliedSearch}</span>}
                     </div>
 
-                    <div className="flex items-center gap-2 flex-1 md:justify-end">
-                        {/* 搜索框 */}
-                        <div className="flex gap-1 w-full md:w-auto">
+                    <div className="flex flex-wrap items-center gap-2 flex-1 md:justify-end">
+                        
+                        {/* 1. 搜索组 */}
+                        <div className="flex gap-1 w-full md:w-auto items-stretch h-[38px]">
+                            <select 
+                                value={searchTarget}
+                                onChange={(e) => setSearchTarget(e.target.value as SearchTarget)}
+                                className="bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white outline-none"
+                            >
+                                <option value="all">全部</option>
+                                <option value="chat">搜弹幕</option>
+                                <option value="gift">搜礼物</option>
+                            </select>
+
                             <input 
                                 type="text" 
-                                className="block w-full md:w-60 p-2 pl-3 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white" 
-                                placeholder="搜索 用户/内容/礼物..." 
+                                className="block w-full md:w-48 p-2 text-sm text-gray-900 border-t border-b border-gray-300 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white" 
+                                placeholder="关键词..." 
                                 value={inputSearch}
                                 onChange={(e) => setInputSearch(e.target.value)}
                                 onKeyDown={handleKeyDown}
                             />
                             <button 
                                 onClick={handleSearch}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg whitespace-nowrap"
+                                className="px-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-r-lg transition-colors whitespace-nowrap"
                             >
                                 搜索
                             </button>
                         </div>
 
-                        {/* 价格过滤器 (勾选才生效) */}
+                        {/* 2. 价格过滤器 */}
                         <div className={`flex items-center rounded-lg px-2 border h-[38px] transition-colors ${enableMinPrice ? 'bg-pink-50 border-pink-200 dark:bg-pink-900/20 dark:border-pink-800' : 'bg-gray-100 border-gray-200 dark:bg-gray-800 dark:border-gray-700'}`}>
                             <input 
                                 type="checkbox"
                                 checked={enableMinPrice}
                                 onChange={(e) => setEnableMinPrice(e.target.checked)}
-                                className="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 mr-2 cursor-pointer"
+                                className="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 mr-2 cursor-pointer"
                             />
-                            <span className={`text-xs mr-2 whitespace-nowrap ${enableMinPrice ? 'text-pink-600 font-bold' : 'text-gray-500'}`}>≥</span>
+                            <span className={`text-xs mr-1 whitespace-nowrap ${enableMinPrice ? 'text-pink-600 font-bold' : 'text-gray-500'}`}>&gt;</span>
                             <input 
                                 type="number" 
-                                className={`w-16 bg-transparent border-none text-sm focus:ring-0 p-1 text-right font-bold outline-none ${enableMinPrice ? 'text-pink-600' : 'text-gray-400'}`}
-                                value={minPrice}
+                                className={`w-14 bg-transparent border-none text-sm focus:ring-0 p-1 text-right font-bold outline-none ${enableMinPrice ? 'text-pink-600' : 'text-gray-400'}`}
+                                value={minPriceInput}
                                 min={0}
-                                disabled={!enableMinPrice}
-                                onChange={(e) => setMinPrice(Number(e.target.value))}
+                                onChange={(e) => setMinPriceInput(Number(e.target.value))}
                             />
-                            <span className="text-xs ml-1 text-gray-400">💎</span>
                         </div>
                     </div>
                 </div>
@@ -282,9 +290,17 @@ export default function RoomDetailPage() {
                 
                 {/* 弹幕区 */}
                 <div className="md:col-span-2 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden">
-                    <div className="p-3 border-b bg-gray-50 dark:bg-gray-800/50 font-semibold flex justify-between">
+                    <div className="p-3 border-b bg-gray-50 dark:bg-gray-800/50 font-semibold flex justify-between items-center h-[50px]">
                         <span className="text-gray-900 dark:text-gray-100">💬 实时弹幕</span>
-                        {appliedSearch && <span className="text-xs text-blue-500">结果已过滤</span>}
+                        {loadingChats ? (
+                            <span className="text-xs text-blue-500 animate-pulse">刷新中...</span>
+                        ) : (
+                            appliedSearch && (searchTarget === 'all' || searchTarget === 'chat') && (
+                                <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                                    🔍 {appliedSearch}
+                                </span>
+                            )
+                        )}
                     </div>
                     
                     <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar" onScroll={(e) => handleScroll(e, 'chat')}>
@@ -315,21 +331,33 @@ export default function RoomDetailPage() {
                                 </div>
                             </div>
                         ))}
-                        {loadingChats && <div className="py-2 text-center text-xs text-gray-400">加载中...</div>}
-                        {chats.length === 0 && !loadingChats && <div className="py-10 text-center text-gray-400">无搜索结果</div>}
+                        {loadingChats && chats.length === 0 && <div className="py-10 text-center text-xs text-gray-400">加载中...</div>}
+                        {chats.length === 0 && !loadingChats && <div className="py-10 text-center text-gray-400">暂无数据</div>}
                     </div>
                 </div>
 
                 {/* 礼物区 */}
                 <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden">
-                    <div className="p-3 border-b bg-gray-50 dark:bg-gray-800/50 font-semibold text-gray-900 dark:text-gray-100 flex justify-between">
+                    <div className="p-3 border-b bg-gray-50 dark:bg-gray-800/50 font-semibold text-gray-900 dark:text-gray-100 flex justify-between items-center h-[50px]">
                         <span>🎁 礼物记录</span>
-                        {enableMinPrice && <span className="text-xs text-pink-500">过滤 ≥ {minPrice}</span>}
+                        <div className="flex gap-2 items-center">
+                            {loadingGifts && <span className="text-xs text-pink-500 animate-pulse">刷新中...</span>}
+                            
+                            {!loadingGifts && appliedSearch && (searchTarget === 'all' || searchTarget === 'gift') && (
+                                <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">
+                                    🔍 {appliedSearch}
+                                </span>
+                            )}
+                            {enableMinPrice && (
+                                <span className="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full">
+                                    &gt; {debouncedMinPrice} 钻
+                                </span>
+                            )}
+                        </div>
                     </div>
                     <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar bg-gray-50/30 dark:bg-black/20" onScroll={(e) => handleScroll(e, 'gift')}>
                          {gifts.map((gift, idx) => {
                             const isBig = gift.total_diamond_count >= 100;
-                            // 显示总数量 (int32 安全)
                             const displayCount = gift.combo_count * (gift.group_count || 1);
 
                             return (
@@ -389,8 +417,8 @@ export default function RoomDetailPage() {
                                 </div>
                             );
                         })}
-                        {loadingGifts && <div className="py-2 text-center text-xs text-gray-400">加载中...</div>}
-                        {gifts.length === 0 && !loadingGifts && <div className="py-10 text-center text-gray-400">无搜索结果</div>}
+                        {loadingGifts && gifts.length === 0 && <div className="py-10 text-center text-xs text-gray-400">加载中...</div>}
+                        {gifts.length === 0 && !loadingGifts && <div className="py-10 text-center text-gray-400">暂无数据</div>}
                     </div>
                 </div>
             </main>
