@@ -6,7 +6,7 @@ import QueryProvider from "@/components/query-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DouyinPulse | 抖动脉搏监控系统",
+  title: "1103监控系统",
   description: "Real-time Douyin Live Data Visualization Platform",
 };
 

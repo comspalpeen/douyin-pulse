@@ -10,7 +10,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "p26.douyinpic.com" },
       { protocol: "https", hostname: "p3.douyinpic.com" },
       { protocol: "https", hostname: "p3-webcast.douyinpic.com" },
-      
+      { protocol: "https", hostname: "***.byteimg.com" },
+      { protocol: "http", hostname: "***.byteimg.com" },
     ],
   },
   // 代理配置：将前端 /api 请求转发到 Python 后端 (默认8000端口)

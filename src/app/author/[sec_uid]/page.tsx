@@ -12,11 +12,12 @@ interface Room {
     max_viewers: number;
     like_count: number;
     live_status: number; // 1:直播中, 4:结束
+    total_diamond_count?: number; // ✅ 新增：钻石字段
 }
 
 interface AuthorStats {
     totalShows: number;
-    totalLikes: number;
+    recent7DaysRevenue: number; // ✅ 修改：近七日营收
     peakViewer: number;
     lastActive: string;
 }
@@ -29,8 +30,7 @@ export default function AuthorDetailPage() {
     const [rooms, setRooms] = useState<Room[]>([]);
     const [loading, setLoading] = useState(true);
     
-    // 模拟的主播信息 (实际项目中建议增加一个 /api/authors/{sec_uid} 接口获取详情)
-    // 这里我们暂时从最新的直播记录中提取主播信息作为兜底
+    // 模拟的主播信息
     const [authorInfo, setAuthorInfo] = useState<{name: string, avatar: string}>({ name: '加载中...', avatar: '' });
 
     useEffect(() => {
@@ -41,14 +41,6 @@ export default function AuthorDetailPage() {
                 if (res.ok) {
                     const data = await res.json();
                     setRooms(data);
-                    
-                    // 尝试从第一条记录提取主播信息 (临时方案)
-                    // 如果你有单独的获取主播详情接口，请在这里调用替换
-                    if (data.length > 0) {
-                        // 注意：这里假设 api 返回的 rooms 里虽然没直接带主播头像，但我们可以先用默认图
-                        // 如果后端 rooms 接口补全了 owner 信息会更好
-                        // 这里暂时只更新状态，实际信息展示需依赖数据源
-                    }
                 }
             } catch (error) {
                 console.error('Fetch error:', error);
@@ -61,19 +53,29 @@ export default function AuthorDetailPage() {
 
     // --- 核心：前端聚合统计数据 ---
     const stats: AuthorStats = useMemo(() => {
-        if (rooms.length === 0) return { totalShows: 0, totalLikes: 0, peakViewer: 0, lastActive: '-' };
+        if (rooms.length === 0) return { totalShows: 0, recent7DaysRevenue: 0, peakViewer: 0, lastActive: '-' };
         
-        let totalLikes = 0;
+        let recent7DaysRevenue = 0;
         let peakViewer = 0;
         
+        // 计算7天前的时间戳
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
         rooms.forEach(r => {
-            totalLikes += r.like_count;
+            // 计算峰值
             if (r.max_viewers > peakViewer) peakViewer = r.max_viewers;
+
+            // ✅ 计算近七日钻石
+            const roomDate = new Date(r.created_at);
+            if (roomDate >= sevenDaysAgo) {
+                recent7DaysRevenue += (r.total_diamond_count || 0);
+            }
         });
 
         return {
             totalShows: rooms.length,
-            totalLikes,
+            recent7DaysRevenue,
             peakViewer,
             lastActive: rooms[0].created_at // 列表默认倒序，第一个即最新
         };
@@ -98,7 +100,8 @@ export default function AuthorDetailPage() {
     };
 
     const formatNum = (num: number) => {
-        return num >= 10000 ? (num / 10000).toFixed(1) + 'w' : num.toLocaleString();
+        if (!num) return '0';
+        return num >= 10000 ? (num / 10000).toFixed(1) + '万' : num.toLocaleString();
     };
 
     const goToDouyinProfile = () => {
@@ -145,10 +148,10 @@ export default function AuthorDetailPage() {
                             <div className="text-xs text-purple-500 mb-1 font-medium">历史最高在线</div>
                             <div className="text-2xl font-black text-purple-700 dark:text-purple-400">{formatNum(stats.peakViewer)}</div>
                         </div>
-                        {/* 统计项 3 */}
+                        {/* 统计项 3: ✅ 近七日营收 */}
                         <div className="text-center p-3 bg-pink-50 dark:bg-pink-900/10 rounded-xl">
-                            <div className="text-xs text-pink-500 mb-1 font-medium">累计获赞</div>
-                            <div className="text-2xl font-black text-pink-700 dark:text-pink-400">{formatNum(stats.totalLikes)}</div>
+                            <div className="text-xs text-pink-500 mb-1 font-medium">近七日营收(钻)</div>
+                            <div className="text-2xl font-black text-pink-700 dark:text-pink-400">{formatNum(stats.recent7DaysRevenue)}</div>
                         </div>
                         {/* 统计项 4 */}
                         <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
@@ -212,8 +215,9 @@ export default function AuthorDetailPage() {
                                             <span className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-medium">
                                                 👀 {formatNum(room.max_viewers)}
                                             </span>
+                                            {/* ✅ 修改：显示本场钻石营收 */}
                                             <span className="flex items-center gap-1 text-pink-600 dark:text-pink-400 font-medium">
-                                                ❤️ {formatNum(room.like_count)}
+                                                💎 {formatNum(room.total_diamond_count || 0)}
                                             </span>
                                         </div>
                                     </div>
