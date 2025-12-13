@@ -114,17 +114,22 @@ const StatsModal: React.FC<StatsModalProps> = ({ room, isOpen, onClose }) => {
                         </div>
                     </div>
 
-                    {/* 第五行：基础信息 */}
-                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-xl flex justify-between items-center text-sm">
-                        <div className="flex flex-col">
-                            <span className="text-xs text-gray-500">直播时长</span>
-                            <span className="font-bold dark:text-white">{formatDuration(getDurationSec())}</span>
+                    {/* ✅ 修改：第五行 - 拆分为两个独立卡片，突出显示涨粉 */}
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* 左侧：直播时长 */}
+                        <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">直播时长</div>
+                            <div className="text-lg font-black text-gray-700 dark:text-gray-200 font-mono">
+                                {formatDuration(getDurationSec())}
+                            </div>
                         </div>
-                        <div className="flex flex-col text-right">
-                            <span className="text-xs text-gray-500">本场涨粉</span>
-                            <span className={`font-bold ${(room.follower_diff || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+
+                        {/* 右侧：本场涨粉 (高亮样式) */}
+                        <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                            <div className="text-xs text-emerald-600 dark:text-emerald-400 mb-1 font-bold">本场涨粉</div>
+                            <div className={`text-xl font-black ${(room.follower_diff || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>
                                 {(room.follower_diff || 0) > 0 ? '+' : ''}{formatStat(room.follower_diff)}
-                            </span>
+                            </div>
                         </div>
                     </div>
                     

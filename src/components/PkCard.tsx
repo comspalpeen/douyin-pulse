@@ -13,7 +13,11 @@ const PkCard: React.FC<PkCardProps> = ({ pk }) => {
         e.stopPropagation();
         e.preventDefault();
         
-        const target = e.currentTarget as HTMLElement; // 修改类型以兼容 div
+        // ✅ 核心修复 1: 立即打开一个空白窗口 (保留用户交互上下文，防止被浏览器拦截)
+        // 注意：这必须在 await 之前执行
+        const newWindow = window.open('about:blank', '_blank');
+
+        const target = e.currentTarget as HTMLElement; 
         target.style.cursor = 'wait';
         target.style.opacity = '0.7';
 
@@ -22,11 +26,18 @@ const PkCard: React.FC<PkCardProps> = ({ pk }) => {
             const data = await res.json();
             
             if (data.sec_uid) {
-                window.open(`https://www.douyin.com/user/${data.sec_uid}`, '_blank');
+                // ✅ 核心修复 2: 拿到数据后，将刚才的空白窗口重定向到目标地址
+                if (newWindow) {
+                    newWindow.location.href = `https://www.douyin.com/user/${data.sec_uid}`;
+                }
             } else {
+                // 如果没有数据，关闭刚才打开的空白窗口
+                newWindow?.close();
                 alert("未查询到该用户主页信息");
             }
         } catch (error) {
+            // 出错也关闭窗口
+            newWindow?.close();
             console.error("跳转失败", error);
         } finally {
             target.style.cursor = 'pointer';

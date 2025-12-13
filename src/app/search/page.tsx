@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react'; // ✅ 新增 Suspense
+import { useState, useEffect, Suspense, useRef, useCallback } from 'react'; 
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
-// 定义后端返回的数据结构
 interface SearchResult {
     user_name: string;
     sec_uid: string;
@@ -17,11 +16,8 @@ interface SearchResult {
     room_cover: string;
 }
 
-// -----------------------------------------------------------------------------
-// 1. 将原本的页面逻辑提取为子组件 "SearchContent"
-// -----------------------------------------------------------------------------
 function SearchContent() {
-    const searchParams = useSearchParams(); // ✅ 在 Suspense 内部使用安全
+    const searchParams = useSearchParams();
     const router = useRouter();
     
     const initialQuery = searchParams.get('q') || '';
@@ -30,19 +26,48 @@ function SearchContent() {
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
+    
+    // ✅ 新增分页状态
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    
+    // ✅ 滚动加载的 Observer
+    const observer = useRef<IntersectionObserver | null>(null);
+    const loaderRef = useCallback((node: HTMLDivElement) => {
+        if (loading) return;
+        if (observer.current) observer.current.disconnect();
+        
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                // 触底加载下一页
+                loadMoreData();
+            }
+        });
+        
+        if (node) observer.current.observe(node);
+    }, [loading, hasMore]); // 依赖项变化时重新绑定
 
-    // --- 执行搜索 ---
-    const doSearch = async (q: string) => {
+    // --- 核心搜索/加载函数 ---
+    const fetchSearchResults = async (q: string, pageNum: number) => {
         if (!q.trim()) return;
         setLoading(true);
         setHasSearched(true);
-        setResults([]); 
 
         try {
-            const res = await fetch(`/api/search/global?keyword=${encodeURIComponent(q)}&limit=50`);
+            // 请求后端，带上 page 参数
+            const res = await fetch(`/api/search/global?keyword=${encodeURIComponent(q)}&limit=20&page=${pageNum}`);
             if (res.ok) {
                 const data = await res.json();
-                setResults(data);
+                
+                // 判断是否还有更多数据 (如果返回数量少于 limit，说明到底了)
+                if (data.length < 20) {
+                    setHasMore(false);
+                } else {
+                    setHasMore(true);
+                }
+
+                // 如果是第一页，覆盖数据；否则追加数据
+                setResults(prev => pageNum === 1 ? data : [...prev, ...data]);
             } else {
                 console.error("搜索失败", res.status);
             }
@@ -53,13 +78,26 @@ function SearchContent() {
         }
     };
 
+    // --- 初始化搜索 (URL 变化) ---
     useEffect(() => {
         const query = searchParams.get('q');
         if (query) {
             setKeyword(query);
-            doSearch(query);
+            setPage(1);       // 重置页码
+            setHasMore(true); // 重置状态
+            setResults([]);   // 清空列表防止闪烁
+            fetchSearchResults(query, 1);
         }
     }, [searchParams]);
+
+    // --- 加载更多 ---
+    const loadMoreData = () => {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        // 使用当前的 keyword 状态或 URL 参数
+        const currentQuery = searchParams.get('q') || keyword;
+        fetchSearchResults(currentQuery, nextPage);
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -77,28 +115,43 @@ function SearchContent() {
     const handleCopyUid = async (e: React.MouseEvent, uid: string) => {
         e.stopPropagation();
         e.preventDefault();
-        try {
-            if (navigator.clipboard && window.isSecureContext) {
+        
+        // 1. 优先尝试现代 Clipboard API (仅支持 HTTPS 或 localhost)
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
                 await navigator.clipboard.writeText(uid);
                 alert(`✅ 复制成功！\nUID: ${uid}`);
+                return;
+            } catch (err) {
+                console.warn('Clipboard API 失败，尝试降级方案:', err);
+            }
+        }
+
+        // 2. 降级方案：使用传统的 textarea + execCommand (支持 HTTP)
+        const textArea = document.createElement("textarea");
+        textArea.value = uid;
+        
+        // 确保 textarea 不可见且不影响布局
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                alert(`✅ 复制成功！\nUID: ${uid}`);
             } else {
-                const textArea = document.createElement("textarea");
-                textArea.value = uid;
-                textArea.style.position = "fixed";
-                textArea.style.left = "-9999px";
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    alert(`✅ 复制成功！\nUID: ${uid}`);
-                } catch (err) {
-                    prompt("请手动复制:", uid);
-                }
-                document.body.removeChild(textArea);
+                throw new Error("execCommand failed");
             }
         } catch (err) {
-            prompt("请手动复制:", uid);
+            // 3. 如果所有方案都失败，才弹出手动复制
+            prompt("复制失败，请手动复制:", uid);
+        } finally {
+            document.body.removeChild(textArea);
         }
     };
 
@@ -124,7 +177,7 @@ function SearchContent() {
                             placeholder="🔍 搜用户名 或 sec_uid..."
                             value={keyword}
                             onChange={e => setKeyword(e.target.value)}
-                            autoFocus
+                            // autoFocus // 建议移除 autoFocus 以防移动端自动弹出键盘遮挡
                         />
                         <button 
                             type="submit" 
@@ -136,26 +189,26 @@ function SearchContent() {
                 </div>
             </div>
 
-            {/* 状态提示 */}
-            {loading && (
+            {/* 初始加载状态 */}
+            {loading && page === 1 && (
                 <div className="text-center py-20">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent"></div>
-                    <p className="mt-2 text-gray-500 text-sm">正在全站检索足迹...</p>
+                    <p className="mt-2 text-gray-500 text-sm">正在检索...</p>
                 </div>
             )}
 
             {!loading && hasSearched && results.length === 0 && (
                 <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-2xl border border-dashed border-gray-300 dark:border-gray-800">
                     <span className="text-4xl block mb-2">🤷‍♂️</span>
-                    <p className="text-gray-500">未找到关于 "{keyword}" 的任何发言记录</p>
+                    <p className="text-gray-500">未找到关于 "{keyword}" 的记录</p>
                 </div>
             )}
 
             {/* 结果列表 */}
-            <div className="space-y-4">
-                {!loading && results.map((item, idx) => (
+            <div className="space-y-4 pb-10">
+                {results.map((item, idx) => (
                     <div 
-                        key={idx} 
+                        key={`${item.room_id}-${item.created_at}-${idx}`} 
                         onClick={() => handleJumpToContext(item)}
                         className="group bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-blue-300 dark:border-gray-700 dark:hover:border-blue-700 transition-all cursor-pointer flex gap-4 items-start"
                     >
@@ -200,7 +253,7 @@ function SearchContent() {
                                                         className="text-blue-600 dark:text-blue-400 hover:text-blue-800 hover:underline font-bold px-1"
                                                         title="点击复制完整 UID"
                                                     >
-                                                        点击复制
+                                                        复制
                                                     </button>
                                                 </span>
                                             </div>
@@ -224,15 +277,25 @@ function SearchContent() {
                         </div>
                     </div>
                 ))}
+
+                {/* ✅ 底部加载更多哨兵元素 */}
+                {results.length > 0 && hasMore && (
+                    <div ref={loaderRef} className="py-6 text-center">
+                        <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-blue-500"></div>
+                        <span className="ml-2 text-sm text-gray-400">加载更多...</span>
+                    </div>
+                )}
+                
+                {results.length > 0 && !hasMore && (
+                    <div className="py-10 text-center text-sm text-gray-300">
+                        - 已经到底啦 -
+                    </div>
+                )}
             </div>
         </div>
     );
 }
 
-// -----------------------------------------------------------------------------
-// 2. 主页面组件 (Shell)
-// ✅ 核心修复：在这里使用 Suspense 包裹 SearchContent
-// -----------------------------------------------------------------------------
 export default function GlobalSearchPage() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
