@@ -97,7 +97,16 @@ const PkCard: React.FC<PkCardProps> = ({ pk }) => {
                     >
                         <div className="flex items-center gap-1.5 flex-1 min-w-0 mr-2">
                             <div className="relative flex-shrink-0 w-4 h-4">
-                                <Image src={c.avatar || '/default-avatar.png'} alt={c.nickname} fill sizes="20px" className="rounded-full object-cover border border-border" />
+                                {/* 🚀 第 1 处修改：大哥榜的头像 */}
+                                <Image 
+                                    src={c.avatar || '/default-avatar.png'} 
+                                    alt={c.nickname} 
+                                    fill 
+                                    sizes="20px" 
+                                    className="rounded-full object-cover border border-border" 
+                                    unoptimized={true} 
+                                    referrerPolicy="no-referrer" 
+                                />
                                 {i < 3 && (
                                     <span className={`absolute -top-1 -right-1 text-[6px] flex justify-center items-center w-2.5 h-2.5 rounded-full text-white font-bold scale-90 z-10 ${
                                         i===0 ? 'bg-yellow-500' : i===1 ? 'bg-slate-400' : 'bg-orange-500'
@@ -140,7 +149,16 @@ const PkCard: React.FC<PkCardProps> = ({ pk }) => {
                                         <span className={`w-6 font-bold text-xl ${rankColor} text-center mr-3 drop-shadow-sm`}>{idx + 1}</span>
                                         
                                         <div className="relative mr-3 flex-shrink-0 w-12 h-12 group cursor-pointer" onClick={(e) => handleAvatarClick(e, anchor.user_id)}>
-                                            <Image src={anchor.avatar || '/default-avatar.png'} alt={anchor.nickname} fill sizes="50px" className="rounded-full object-cover border-2 border-transparent group-hover:border-primary/50 transition-colors shadow-sm" />
+                                            {/* 🚀 第 2 处修改：多人赛主播的头像 */}
+                                            <Image 
+                                                src={anchor.avatar || '/default-avatar.png'} 
+                                                alt={anchor.nickname} 
+                                                fill 
+                                                sizes="50px" 
+                                                className="rounded-full object-cover border-2 border-transparent group-hover:border-primary/50 transition-colors shadow-sm" 
+                                                unoptimized={true} 
+                                                referrerPolicy="no-referrer" 
+                                            />
                                             {isWinner && <Crown className="absolute -top-3 -left-1.5 w-5 h-5 text-yellow-500 animate-bounce z-10 filter drop-shadow-md" />}
                                         </div>
 
@@ -210,7 +228,16 @@ const PkCard: React.FC<PkCardProps> = ({ pk }) => {
                         <div key={anchor.user_id} className="flex flex-col w-full bg-card rounded-xl p-2.5 shadow-sm border border-border/50">
                             <div className="flex items-center gap-2 mb-2 border-b border-dashed border-border pb-2 w-full">
                                 <div className="relative w-8 h-8 flex-shrink-0 cursor-pointer group" onClick={(e) => handleAvatarClick(e, anchor.user_id)}>
-                                    <Image src={anchor.avatar || '/default-avatar.png'} alt={anchor.nickname} fill sizes="40px" className={`rounded-full border-2 ${borderColor} p-0.5 object-cover`} />
+                                    {/* 🚀 第 3 处修改：对阵模式的主播头像 */}
+                                    <Image 
+                                        src={anchor.avatar || '/default-avatar.png'} 
+                                        alt={anchor.nickname} 
+                                        fill 
+                                        sizes="40px" 
+                                        className={`rounded-full border-2 ${borderColor} p-0.5 object-cover`} 
+                                        unoptimized={true} 
+                                        referrerPolicy="no-referrer" 
+                                    />
                                 </div>
                                 <div className="flex flex-col min-w-0 flex-1 w-full">
                                     <span className="text-xs font-bold text-foreground truncate block w-full cursor-pointer hover:text-primary transition-colors" onClick={(e) => handleAvatarClick(e, anchor.user_id)}>

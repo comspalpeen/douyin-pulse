@@ -30,7 +30,16 @@ export default function AdminDashboard() {
             <p className="text-muted-foreground mt-2 text-sm">编辑首页右下角弹出的常见问题解答内容。</p>
           </Link>
 
-          {/* 3. (可选) 直播间监控入口 - 如果你有这个页面的话 */}
+          <Link href="/admin/settings" className="block p-6 bg-card border border-border rounded-xl hover:shadow-lg hover:border-primary/50 transition-all group">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-4xl">⚙️</span>
+              <span className="text-muted-foreground group-hover:text-primary text-2xl">→</span>
+            </div>
+            <h3 className="text-xl font-bold text-foreground group-hover:text-primary">系统控制面板</h3>
+            <p className="text-muted-foreground mt-2 text-sm">控制 czlevel 接口联网开关、限流参数和业务盾牌策略。</p>
+          </Link>
+
+          {/* 4. (可选) 直播间监控入口 - 如果你有这个页面的话 */}
           <Link href="/" className="block p-6 bg-card border border-border rounded-xl hover:shadow-lg hover:border-primary transition-all group">
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">📺</span>

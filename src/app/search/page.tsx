@@ -267,7 +267,6 @@ function SearchContent() {
     )}
     <Input 
         type="text" 
-        // 👇 核心修复：把 pl-12 改成 !pl-12，强制撑开左侧间距
         className="w-full h-12 !pl-12 pr-4 rounded-xl border-border bg-card text-base focus-visible:ring-1 focus-visible:ring-primary shadow-sm"
         placeholder="搜用户名/sec_uid..."
         value={keyword}
@@ -290,7 +289,7 @@ function SearchContent() {
                                             onClick={() => handleSelectUser(u)}
                                             className="flex items-center gap-3 px-4 py-3 hover:bg-primary/10 transition-colors cursor-pointer border-b border-border/30 last:border-none"
                                         >
-                                            <img src={u.avatar_url || '/default-avatar.png'} alt="" className="w-10 h-10 rounded-full object-cover border border-border flex-shrink-0" />
+                                            <img src={u.avatar_url || '/default-avatar.png'} alt="" referrerPolicy="no-referrer" className="w-10 h-10 rounded-full object-cover border border-border flex-shrink-0" />
                                             <div className="flex flex-col min-w-0 flex-1">
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="text-sm font-bold text-foreground truncate">{u.user_name}</span>
@@ -299,6 +298,7 @@ function SearchContent() {
                                                         <img 
                                                             src={`https://p3-webcast.douyinpic.com/img/webcast/new_user_grade_level_v1_${u.pay_grade}.png~tplv-obj.image`} 
                                                             alt={`等级 ${u.pay_grade}`} 
+                                                            referrerPolicy="no-referrer"
                                                             className="h-4 w-auto object-contain drop-shadow-sm" 
                                                         />
                                                     )}
@@ -357,7 +357,7 @@ function SearchContent() {
                     <Card key={`${item.room_id}-${item.created_at}-${idx}`} onClick={(e) => handleJumpToContext(e, item)} className="group bg-card border-border shadow-sm hover:shadow-lg hover:border-primary/40 transition-all cursor-pointer overflow-hidden">
                         <CardContent className="p-4 flex gap-4 items-start">
                             <div className="hidden md:block w-32 h-20 relative flex-shrink-0 rounded-lg overflow-hidden bg-muted border border-border">
-                                {item.room_cover ? <Image src={item.room_cover} alt="cover" fill className="object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-black tracking-widest uppercase text-muted-foreground">无封面</div>}
+                                {item.room_cover ? <Image src={item.room_cover} alt="cover" fill unoptimized={true} referrerPolicy="no-referrer" className="object-cover group-hover:scale-105 transition-transform duration-500" /> : <div className="w-full h-full flex items-center justify-center text-[10px] font-black tracking-widest uppercase text-muted-foreground">无封面</div>}
                                 <div className="absolute bottom-0 w-full bg-background/80 backdrop-blur-sm text-foreground text-[10px] font-bold text-center py-1 truncate px-2 border-t border-border">{item.anchor_name}</div>
                             </div>
 
@@ -365,13 +365,13 @@ function SearchContent() {
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center gap-3">
                                         <div className="relative w-10 h-10 flex-shrink-0">
-                                            <Image src={item.avatar_url || '/default-avatar.png'} alt="avatar" fill className="rounded-full object-cover border border-border shadow-sm"/>
+                                            <Image src={item.avatar_url || '/default-avatar.png'} alt="avatar" fill unoptimized={true} referrerPolicy="no-referrer" className="rounded-full object-cover border border-border shadow-sm"/>
                                         </div>
                                         <div className="flex flex-col">
                                             <div className="flex items-center gap-1.5">
                                                 <span className="font-black text-foreground text-sm md:text-base group-hover:text-primary transition-colors">{item.user_name}</span>
-                                                {item.pay_grade_icon && <img src={item.pay_grade_icon} alt="level" className="h-4 w-auto object-contain drop-shadow-sm" />}
-                                                {item.fans_club_icon && <img src={item.fans_club_icon} alt="fans" className="h-4 w-auto object-contain drop-shadow-sm" />}
+                                                {item.pay_grade_icon && <img src={item.pay_grade_icon} alt="level" referrerPolicy="no-referrer" className="h-4 w-auto object-contain drop-shadow-sm" />}
+                                                {item.fans_club_icon && <img src={item.fans_club_icon} alt="fans" referrerPolicy="no-referrer" className="h-4 w-auto object-contain drop-shadow-sm" />}
                                             </div>
                                             {item.sec_uid && (
                                                 <div className="flex items-center mt-1">
@@ -389,9 +389,8 @@ function SearchContent() {
                                 {/* Content: 区分礼物和弹幕显示 */}
                                 {searchType === 'gift' ? (
                                     <div className="bg-orange-500/10 border border-orange-500/30 px-3.5 py-2.5 rounded-lg text-sm text-orange-500/90 break-all leading-relaxed shadow-inner flex items-center gap-2">
-                                        {item.gift_icon && <img src={item.gift_icon} alt="gift" className="w-6 h-6 object-contain" />}
+                                        {item.gift_icon && <img src={item.gift_icon} alt="gift" referrerPolicy="no-referrer" className="w-6 h-6 object-contain" />}
                                         <span className="font-bold">送出了 {item.content} 
-                                            {/* 👇 增加高亮显示的数量 */}
                                             {item.gift_count && item.gift_count > 0 && (
                                                 <span className="font-black text-orange-600 ml-1 drop-shadow-sm">x{item.gift_count}</span>
                                             )}

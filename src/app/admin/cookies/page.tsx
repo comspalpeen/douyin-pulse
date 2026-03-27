@@ -20,7 +20,7 @@ export default function CookieManagerPage() {
   const [inputNote, setInputNote] = useState('');
   const [inputCookie, setInputCookie] = useState('');
   const [loading, setLoading] = useState(false);
-  const [editingNote, setEditingNote] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<any | null>(null);
 
   useEffect(() => {
     const savedPwd = localStorage.getItem('admin_pwd');
@@ -66,12 +66,20 @@ export default function CookieManagerPage() {
         alert("请填写账号备注！");
         return;
     }
+    if (!inputCookie.trim()) {
+        alert("请填写 Cookie 内容！");
+        return;
+    }
     
     setLoading(true);
     const res = await fetch('/api/admin/cookies', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': password },
-      body: JSON.stringify({ note: inputNote, cookie: inputCookie })
+      body: JSON.stringify({
+        note: inputNote,
+        cookie: inputCookie,
+        original_cookie_hash: editingItem?.cookie_hash ?? null,
+      })
     });
     
     if (res.ok) {
@@ -97,14 +105,14 @@ export default function CookieManagerPage() {
   const handleEdit = (item: any) => {
     setInputNote(item.note || '');
     setInputCookie(item.cookie || '');
-    setEditingNote(item.note);
+    setEditingItem(item);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const resetForm = () => {
     setInputNote('');
     setInputCookie('');
-    setEditingNote(null);
+    setEditingItem(null);
   };
 
   // 1. 鉴权页面 UI (基于全局变量)
@@ -164,17 +172,17 @@ export default function CookieManagerPage() {
         </div>
 
         {/* 添加/编辑区域 */}
-        <Card className={`shadow-xl transition-all duration-300 border ${editingNote ? 'bg-primary/5 border-primary/30' : 'bg-card border-border'}`}>
+        <Card className={`shadow-xl transition-all duration-300 border ${editingItem ? 'bg-primary/5 border-primary/30' : 'bg-card border-border'}`}>
           <CardHeader className="pb-4">
             <div className="flex justify-between items-center">
                 <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
-                {editingNote ? (
-                    <><Edit className="w-5 h-5 text-primary"/> 正在编辑: {editingNote}</>
+                {editingItem ? (
+                    <><Edit className="w-5 h-5 text-primary"/> 正在编辑: {editingItem.note}</>
                 ) : (
                     <><Plus className="w-5 h-5 text-primary"/> 添加 / 更新账号</>
                 )}
                 </CardTitle>
-                {editingNote && (
+                {editingItem && (
                     <Button variant="ghost" size="sm" onClick={resetForm} className="text-muted-foreground hover:text-foreground h-8">
                         取消编辑
                     </Button>
@@ -188,11 +196,11 @@ export default function CookieManagerPage() {
                     <Input 
                         placeholder="例如: 抖音小号01" 
                         value={inputNote}
-                        disabled={!!editingNote}
+                        disabled={!!editingItem}
                         onChange={e => setInputNote(e.target.value)}
-                        className={`h-11 shadow-sm ${editingNote ? 'bg-muted text-muted-foreground opacity-70 cursor-not-allowed' : 'bg-background'}`}
+                        className={`h-11 shadow-sm ${editingItem ? 'bg-muted text-muted-foreground opacity-70 cursor-not-allowed' : 'bg-background'}`}
                     />
-                    {editingNote && <p className="text-xs text-destructive mt-1 font-bold ml-1 flex items-center gap-1"><ShieldAlert className="w-3 h-3"/> 编辑模式下不可修改备注名</p>}
+                    {editingItem && <p className="text-xs text-destructive mt-1 font-bold ml-1 flex items-center gap-1"><ShieldAlert className="w-3 h-3"/> 编辑模式下不可修改备注名</p>}
                 </div>
                 <div className="md:w-2/3 space-y-2 flex-1 min-w-0">
                     <label className="text-sm font-bold text-foreground ml-1">Cookie 内容</label>
@@ -207,12 +215,12 @@ export default function CookieManagerPage() {
             <div className="flex justify-end pt-2">
                 {/* 默认状态使用 default (Primary)，编辑状态使用 secondary 或继续用 default 加以强调 */}
                 <Button 
-                    variant={editingNote ? "secondary" : "default"}
+                    variant={editingItem ? "secondary" : "default"}
                     onClick={handleSubmit} 
                     disabled={loading}
                     className="h-11 px-8 font-bold shadow-md transition-transform active:scale-95"
                 >
-                    {loading ? '提交中...' : (editingNote ? '确认修改 (覆盖旧值)' : '保存新账号')}
+                    {loading ? '提交中...' : (editingItem ? '确认修改 (覆盖旧值)' : '保存新账号')}
                 </Button>
             </div>
           </CardContent>
@@ -236,9 +244,9 @@ export default function CookieManagerPage() {
                     <TableBody>
                     {cookieList.map((item, idx) => {
                         const isExpired = !item.cookie;
-                        const isEditing = editingNote === item.note;
+                        const isEditing = editingItem?.cookie_hash === item.cookie_hash;
                         return (
-                        <TableRow key={idx} className={`border-border ${isExpired ? 'bg-destructive/5' : ''} ${isEditing ? 'bg-primary/5' : ''}`}>
+                        <TableRow key={item.cookie_hash || `${item.note || 'cookie'}-${idx}`} className={`border-border ${isExpired ? 'bg-destructive/5' : ''} ${isEditing ? 'bg-primary/5' : ''}`}>
                             <TableCell className="text-center font-medium">
                             {isExpired ? (
                                 <Badge variant="destructive" className="font-bold px-2 py-0.5 shadow-sm whitespace-nowrap">失效</Badge>
