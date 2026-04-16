@@ -9,37 +9,66 @@ import { Switch } from "@/components/ui/switch";
 import { Lock, RefreshCw, Save, ShieldCheck, Unlock } from "lucide-react";
 
 type SystemSettingsPayload = {
-  api_switch: number;
+  single_api_switch: number;
+  batch_api_switch: number;
   enable_zero_level_shield: boolean;
   active_shield_days: number;
-  api_query_limit: number;
-  api_query_window: number;
-  global_api_query_limit: number;
+  single_api_query_limit: number;
+  single_api_query_window: number;
+  single_global_api_query_limit: number;
+  batch_api_query_limit: number;
+  batch_api_query_window: number;
+  batch_global_api_query_limit: number;
 };
 
 type SettingsFormState = {
-  api_switch: number;
+  single_api_switch: number;
+  batch_api_switch: number;
   enable_zero_level_shield: boolean;
   active_shield_days: number | "";
-  api_query_limit: number | "";
-  api_query_window: number | "";
-  global_api_query_limit: number | "";
+  single_api_query_limit: number | "";
+  single_api_query_window: number | "";
+  single_global_api_query_limit: number | "";
+  batch_api_query_limit: number | "";
+  batch_api_query_window: number | "";
+  batch_global_api_query_limit: number | "";
 };
 
 const DEFAULT_SETTINGS: SystemSettingsPayload = {
-  api_switch: 1,
+  single_api_switch: 1,
+  batch_api_switch: 1,
   enable_zero_level_shield: true,
   active_shield_days: 3,
-  api_query_limit: 600,
-  api_query_window: 3600,
-  global_api_query_limit: 20000,
+  single_api_query_limit: 600,
+  single_api_query_window: 3600,
+  single_global_api_query_limit: 20000,
+  batch_api_query_limit: 600,
+  batch_api_query_window: 3600,
+  batch_global_api_query_limit: 20000,
 };
 
-const API_SWITCH_OPTIONS = [
+const SINGLE_API_SWITCH_OPTIONS = [
   { value: 0, title: "0 - 数据库模式", desc: "禁用外部 API，只返回数据库历史数据。" },
   { value: 1, title: "1 - 实时更新模式", desc: "默认模式，可联网查询并动态更新结果。" },
   { value: 2, title: "2 - 仅转换模式", desc: "只做 display_id → sec_uid 转换，不请求实时等级。" },
 ] as const;
+
+const BATCH_API_SWITCH_OPTIONS = [
+  { value: 0, title: "0 - 数据库模式", desc: "批量查询只走数据库，不做联网补全和转换。" },
+  { value: 1, title: "1 - 联网补全模式", desc: "允许批量执行联网转换，用数据库结果做批量补全。" },
+  { value: 2, title: "2 - 仅转换模式", desc: "保留为独立批量策略档位，当前主要用于 display_id 转 sec_uid。" },
+] as const;
+
+type NumericField = keyof Pick<
+  SettingsFormState,
+  | "active_shield_days"
+  | "single_api_query_limit"
+  | "single_api_query_window"
+  | "single_global_api_query_limit"
+  | "batch_api_query_limit"
+  | "batch_api_query_window"
+  | "batch_global_api_query_limit"
+>;
 
 export default function AdminSettingsPage() {
   const [authorized, setAuthorized] = useState(false);
@@ -72,19 +101,43 @@ export default function AdminSettingsPage() {
   };
 
   const normalizeSettings = (current: SettingsFormState): SystemSettingsPayload => ({
-    api_switch: current.api_switch,
+    single_api_switch: current.single_api_switch,
+    batch_api_switch: current.batch_api_switch,
     enable_zero_level_shield: current.enable_zero_level_shield,
     active_shield_days: normalizeNumberField(current.active_shield_days, DEFAULT_SETTINGS.active_shield_days, 0),
-    api_query_limit: normalizeNumberField(current.api_query_limit, DEFAULT_SETTINGS.api_query_limit, 1),
-    api_query_window: normalizeNumberField(current.api_query_window, DEFAULT_SETTINGS.api_query_window, 1),
-    global_api_query_limit: normalizeNumberField(
-      current.global_api_query_limit,
-      DEFAULT_SETTINGS.global_api_query_limit,
+    single_api_query_limit: normalizeNumberField(
+      current.single_api_query_limit,
+      DEFAULT_SETTINGS.single_api_query_limit,
+      1
+    ),
+    single_api_query_window: normalizeNumberField(
+      current.single_api_query_window,
+      DEFAULT_SETTINGS.single_api_query_window,
+      1
+    ),
+    single_global_api_query_limit: normalizeNumberField(
+      current.single_global_api_query_limit,
+      DEFAULT_SETTINGS.single_global_api_query_limit,
+      1
+    ),
+    batch_api_query_limit: normalizeNumberField(
+      current.batch_api_query_limit,
+      DEFAULT_SETTINGS.batch_api_query_limit,
+      1
+    ),
+    batch_api_query_window: normalizeNumberField(
+      current.batch_api_query_window,
+      DEFAULT_SETTINGS.batch_api_query_window,
+      1
+    ),
+    batch_global_api_query_limit: normalizeNumberField(
+      current.batch_global_api_query_limit,
+      DEFAULT_SETTINGS.batch_global_api_query_limit,
       1
     ),
   });
 
-  const setNumericField = (field: keyof Pick<SettingsFormState, "active_shield_days" | "api_query_limit" | "api_query_window" | "global_api_query_limit">, value: string) => {
+  const setNumericField = (field: NumericField, value: string) => {
     setSettings((prev) => ({
       ...prev,
       [field]: value === "" ? "" : value,
@@ -92,7 +145,7 @@ export default function AdminSettingsPage() {
   };
 
   const handleNumericBlur = (
-    field: keyof Pick<SettingsFormState, "active_shield_days" | "api_query_limit" | "api_query_window" | "global_api_query_limit">,
+    field: NumericField,
     fallback: number,
     min: number
   ) => {
@@ -103,9 +156,13 @@ export default function AdminSettingsPage() {
   };
 
   const normalizedSettings = normalizeSettings(settings);
-  const safeWindowMinutes = useMemo(
-    () => Math.ceil(normalizedSettings.api_query_window / 60),
-    [normalizedSettings.api_query_window]
+  const singleWindowMinutes = useMemo(
+    () => Math.ceil(normalizedSettings.single_api_query_window / 60),
+    [normalizedSettings.single_api_query_window]
+  );
+  const batchWindowMinutes = useMemo(
+    () => Math.ceil(normalizedSettings.batch_api_query_window / 60),
+    [normalizedSettings.batch_api_query_window]
   );
 
   const fetchSettings = async (pwd: string): Promise<boolean> => {
@@ -121,7 +178,12 @@ export default function AdminSettingsPage() {
       if (res.ok) {
         const data: Partial<SystemSettingsPayload> = await res.json();
         setSettings({
-          api_switch: Number.isFinite(data.api_switch) ? Number(data.api_switch) : DEFAULT_SETTINGS.api_switch,
+          single_api_switch: Number.isFinite(data.single_api_switch)
+            ? Number(data.single_api_switch)
+            : DEFAULT_SETTINGS.single_api_switch,
+          batch_api_switch: Number.isFinite(data.batch_api_switch)
+            ? Number(data.batch_api_switch)
+            : DEFAULT_SETTINGS.batch_api_switch,
           enable_zero_level_shield:
             typeof data.enable_zero_level_shield === "boolean"
               ? data.enable_zero_level_shield
@@ -129,15 +191,24 @@ export default function AdminSettingsPage() {
           active_shield_days: Number.isFinite(data.active_shield_days)
             ? Math.max(0, Number(data.active_shield_days))
             : DEFAULT_SETTINGS.active_shield_days,
-          api_query_limit: Number.isFinite(data.api_query_limit)
-            ? Math.max(1, Number(data.api_query_limit))
-            : DEFAULT_SETTINGS.api_query_limit,
-          api_query_window: Number.isFinite(data.api_query_window)
-            ? Math.max(1, Number(data.api_query_window))
-            : DEFAULT_SETTINGS.api_query_window,
-          global_api_query_limit: Number.isFinite(data.global_api_query_limit)
-            ? Math.max(1, Number(data.global_api_query_limit))
-            : DEFAULT_SETTINGS.global_api_query_limit,
+          single_api_query_limit: Number.isFinite(data.single_api_query_limit)
+            ? Math.max(1, Number(data.single_api_query_limit))
+            : DEFAULT_SETTINGS.single_api_query_limit,
+          single_api_query_window: Number.isFinite(data.single_api_query_window)
+            ? Math.max(1, Number(data.single_api_query_window))
+            : DEFAULT_SETTINGS.single_api_query_window,
+          single_global_api_query_limit: Number.isFinite(data.single_global_api_query_limit)
+            ? Math.max(1, Number(data.single_global_api_query_limit))
+            : DEFAULT_SETTINGS.single_global_api_query_limit,
+          batch_api_query_limit: Number.isFinite(data.batch_api_query_limit)
+            ? Math.max(1, Number(data.batch_api_query_limit))
+            : DEFAULT_SETTINGS.batch_api_query_limit,
+          batch_api_query_window: Number.isFinite(data.batch_api_query_window)
+            ? Math.max(1, Number(data.batch_api_query_window))
+            : DEFAULT_SETTINGS.batch_api_query_window,
+          batch_global_api_query_limit: Number.isFinite(data.batch_global_api_query_limit)
+            ? Math.max(1, Number(data.batch_global_api_query_limit))
+            : DEFAULT_SETTINGS.batch_global_api_query_limit,
         });
         return true;
       }
@@ -275,17 +346,42 @@ export default function AdminSettingsPage() {
 
         <Card className="border-border shadow-lg">
           <CardHeader>
-            <CardTitle className="text-xl font-bold">联网策略</CardTitle>
-            <CardDescription>对应 setting:czlevel_api_switch，控制外部接口调用行为</CardDescription>
+            <CardTitle className="text-xl font-bold">单次查询联网策略</CardTitle>
+            <CardDescription>单查接口独立控制，可与批量查询使用不同联网档位</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {API_SWITCH_OPTIONS.map((option) => {
-              const selected = settings.api_switch === option.value;
+            {SINGLE_API_SWITCH_OPTIONS.map((option) => {
+              const selected = settings.single_api_switch === option.value;
               return (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setSettings((prev) => ({ ...prev, api_switch: option.value }))}
+                  onClick={() => setSettings((prev) => ({ ...prev, single_api_switch: option.value }))}
+                  className={`w-full rounded-[var(--radius)] border p-4 text-left transition-all ${
+                    selected ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"
+                  }`}
+                >
+                  <p className="text-sm font-bold text-foreground">{option.title}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{option.desc}</p>
+                </button>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        <Card className="border-border shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold">批量查询联网策略</CardTitle>
+            <CardDescription>批量查询独立管理，不再跟随单次查询共用同一套联网设置</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {BATCH_API_SWITCH_OPTIONS.map((option) => {
+              const selected = settings.batch_api_switch === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setSettings((prev) => ({ ...prev, batch_api_switch: option.value }))}
                   className={`w-full rounded-[var(--radius)] border p-4 text-left transition-all ${
                     selected ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/40"
                   }`}
@@ -333,8 +429,8 @@ export default function AdminSettingsPage() {
 
         <Card className="border-border shadow-lg">
           <CardHeader>
-            <CardTitle className="text-xl font-bold">限流参数</CardTitle>
-            <CardDescription>对应 rate_limit:api_quota:{'{ip}'} 计数器，按 IP 生效</CardDescription>
+            <CardTitle className="text-xl font-bold">单次查询限流参数</CardTitle>
+            <CardDescription>对应 `rate_limit:api_quota:single:{'{ip}'}`，仅作用于单次查询</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
@@ -342,9 +438,11 @@ export default function AdminSettingsPage() {
               <Input
                 type="number"
                 min={1}
-                value={settings.api_query_limit}
-                onChange={(e) => setNumericField("api_query_limit", e.target.value)}
-                onBlur={() => handleNumericBlur("api_query_limit", DEFAULT_SETTINGS.api_query_limit, 1)}
+                value={settings.single_api_query_limit}
+                onChange={(e) => setNumericField("single_api_query_limit", e.target.value)}
+                onBlur={() =>
+                  handleNumericBlur("single_api_query_limit", DEFAULT_SETTINGS.single_api_query_limit, 1)
+                }
               />
               <p className="text-xs text-muted-foreground">超过后降级到仅数据库返回，不再请求抖音外部接口</p>
             </div>
@@ -354,11 +452,13 @@ export default function AdminSettingsPage() {
               <Input
                 type="number"
                 min={1}
-                value={settings.api_query_window}
-                onChange={(e) => setNumericField("api_query_window", e.target.value)}
-                onBlur={() => handleNumericBlur("api_query_window", DEFAULT_SETTINGS.api_query_window, 1)}
+                value={settings.single_api_query_window}
+                onChange={(e) => setNumericField("single_api_query_window", e.target.value)}
+                onBlur={() =>
+                  handleNumericBlur("single_api_query_window", DEFAULT_SETTINGS.single_api_query_window, 1)
+                }
               />
-              <p className="text-xs text-muted-foreground">当前约 {safeWindowMinutes} 分钟一个窗口</p>
+              <p className="text-xs text-muted-foreground">当前约 {singleWindowMinutes} 分钟一个窗口</p>
             </div>
 
             <div className="space-y-2 md:col-span-2">
@@ -366,13 +466,71 @@ export default function AdminSettingsPage() {
               <Input
                 type="number"
                 min={1}
-                value={settings.global_api_query_limit}
-                onChange={(e) => setNumericField("global_api_query_limit", e.target.value)}
+                value={settings.single_global_api_query_limit}
+                onChange={(e) => setNumericField("single_global_api_query_limit", e.target.value)}
                 onBlur={() =>
-                  handleNumericBlur("global_api_query_limit", DEFAULT_SETTINGS.global_api_query_limit, 1)
+                  handleNumericBlur(
+                    "single_global_api_query_limit",
+                    DEFAULT_SETTINGS.single_global_api_query_limit,
+                    1
+                  )
                 }
               />
               <p className="text-xs text-muted-foreground">单窗口内全站共用的上游 API 请求总额度，超限后整体降级为数据库模式</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold">批量查询限流参数</CardTitle>
+            <CardDescription>对应 `rate_limit:api_quota:batch:{'{ip}'}`，按批量联网补全请求独立计数</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="ml-1 block text-sm font-bold text-foreground">窗口内最大联网补全次数</label>
+              <Input
+                type="number"
+                min={1}
+                value={settings.batch_api_query_limit}
+                onChange={(e) => setNumericField("batch_api_query_limit", e.target.value)}
+                onBlur={() =>
+                  handleNumericBlur("batch_api_query_limit", DEFAULT_SETTINGS.batch_api_query_limit, 1)
+                }
+              />
+              <p className="text-xs text-muted-foreground">批量查询中的 display_id 转换会按次数累计，超限后自动降级为仅数据库模式</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="ml-1 block text-sm font-bold text-foreground">限流窗口 (秒)</label>
+              <Input
+                type="number"
+                min={1}
+                value={settings.batch_api_query_window}
+                onChange={(e) => setNumericField("batch_api_query_window", e.target.value)}
+                onBlur={() =>
+                  handleNumericBlur("batch_api_query_window", DEFAULT_SETTINGS.batch_api_query_window, 1)
+                }
+              />
+              <p className="text-xs text-muted-foreground">当前约 {batchWindowMinutes} 分钟一个窗口</p>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label className="ml-1 block text-sm font-bold text-foreground">批量全局最大外部 API 请求数</label>
+              <Input
+                type="number"
+                min={1}
+                value={settings.batch_global_api_query_limit}
+                onChange={(e) => setNumericField("batch_global_api_query_limit", e.target.value)}
+                onBlur={() =>
+                  handleNumericBlur(
+                    "batch_global_api_query_limit",
+                    DEFAULT_SETTINGS.batch_global_api_query_limit,
+                    1
+                  )
+                }
+              />
+              <p className="text-xs text-muted-foreground">仅用于批量查询的全站联网补全额度，不再占用单次查询的全局配额</p>
             </div>
           </CardContent>
         </Card>
