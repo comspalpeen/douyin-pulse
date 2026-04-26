@@ -28,7 +28,6 @@ export default function RoomDetailPage() {
         filterGender: ui.searchState.filterGender,
         filterMinPayGrade: ui.searchState.filterMinPayGrade,
         filterMinFansLevel: ui.searchState.filterMinFansLevel,
-        // ✅ 核心修改：这里只使用防抖变量！确保你输入 22:22 停手后才发请求
         filterStartTime: ui.searchState.debouncedFilterStartTime,
         filterEndTime: ui.searchState.debouncedFilterEndTime,
         searchTrigger: ui.searchState.searchTrigger,

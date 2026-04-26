@@ -40,6 +40,7 @@
     --input: 152 50% 15%;
     --ring: 152 100% 50%;
     --radius: 0px; /* 战术直角 */
+    --streamer: 190 90% 50%;
   }
 
   /* ➡️ 激活状态：猛男粉甜心主题 (必须挂载在 root 上) */
@@ -57,6 +58,7 @@
     --input: 340 50% 95%;
     --ring: 340 100% 75%;
     --radius: 1rem;
+    --streamer: 190 90% 50%;
     
     /* 🎀 新增：甜心圆润字体栈 (Nunito + 幼圆/圆体) */
     --font-body: var(--font-cute), 'Yuanti SC', 'YouYuan', 'Microsoft Yahei', sans-serif;

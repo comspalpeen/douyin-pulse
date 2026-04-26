@@ -60,7 +60,7 @@ export default function DesktopRoomView({
                             </div>
                         </div>
                     )}
-                    {tab === 'pk' && <PkList pks={data.pks} loading={data.loadingPks} />}
+                    {tab === 'pk' && <PkList roomId={data.roomId} roomUserId={data.roomInfo?.user_id} pks={data.pks} loading={data.loadingPks} onRefreshPks={data.reloadPks} liveStatus={data.roomInfo?.live_status}/>}
                 </div>
             </div>
             

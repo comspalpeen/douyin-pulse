@@ -176,7 +176,21 @@ export function useRoomData(roomId: string, jumpTime: string | null, searchParam
             }
         } catch (e) { console.error(e); } finally { setLoadingPks(false); }
     }, [roomId, loadingPks, pkInitialized]);
-
+    const reloadPks = useCallback(async () => {
+        if (loadingPks) return; // 只防并发，不防已初始化
+        // 此处可以选择不设 setLoadingPks(true)，实现"无感静默刷新"
+        try {
+            const res = await fetch(`/api/rooms/${roomId}/pks?limit=50`);
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    // 把最新的数据放在前面，通过 uniqueData 自动去重和覆盖旧数据
+                    setPks(prev => uniqueData([...data, ...prev], p => p.battle_id));
+                    setPkInitialized(true);
+                }
+            }
+        } catch (e) { console.error(e); }
+    }, [roomId, loadingPks]);
     useEffect(() => {
         if (jumpTime) return;
         if (roomInfo && roomInfo.live_status !== 1) return;
@@ -233,10 +247,13 @@ export function useRoomData(roomId: string, jumpTime: string | null, searchParam
     ]);
 
     return {
+        roomId,
         roomInfo, chats, gifts, pks,
         loadingChats, loadingGifts, loadingPks,
         loadOldChats: () => loadOldData('chat'),
         loadOldGifts: () => loadOldData('gift'),
-        loadPks, jumpError, pkInitialized 
+        loadPks, 
+        reloadPks, // ✅ 将强制刷新方法暴露给外层组件
+        jumpError, pkInitialized 
     };
 }

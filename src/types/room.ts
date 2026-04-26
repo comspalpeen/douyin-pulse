@@ -59,15 +59,49 @@ export interface PkTeam {
 export interface PkBattle {
     battle_id: string;
     start_time: string;
+    roomUserId?: string;
     mode: string;
     teams: PkTeam[];
     duration?: number;     // PK持续时间(秒)
     created_at?: string;   // ✅ 新增：用于兜底计算结束时间
 }
 
+export interface LivePkAnchor {
+    user_id: string;
+    nickname: string;
+    avatar: string;
+    score: number;
+    contributors: PkContributor[];
+}
+
+export interface LivePkTeam {
+    team_id: string;
+    team_score: number;
+    rank?: number;
+    win_status?: number;
+    anchors: LivePkAnchor[];
+}
+
+export interface LivePkSnapshot {
+    type: 'pk_live';
+    room_id: string;
+    roomUserId?: string;
+    battle_id: string;
+    channel_id: string;
+    status: number;
+    mode: string;
+    start_time: number;
+    duration: number;
+    left_team_id: string;
+    teams: LivePkTeam[];
+    updated_at: number;
+}
+
 export interface RoomDetail {
     room_id: string;
     title: string;
+    user_id?: string; // 👈 🌟 必须加上这个！
+    sec_uid?: string; // 👈 🌟 建议一并加上，保持前后端统一！
     nickname: string;
     avatar_url?: string;
     cover_url?: string;
