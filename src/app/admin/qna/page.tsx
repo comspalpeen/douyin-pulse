@@ -16,7 +16,7 @@ export default function AdminQnaPage() {
     
     // 表单状态
     const [form, setForm] = useState<QnA>({ question: '', answer: '', order: 0, is_visible: true });
-    // 编辑状态：存储当前正在编辑的 ID，如果为 null 则为新增模式
+    // 为 null 时表示创建模式。
     const [editingId, setEditingId] = useState<string | null>(null);
 
     const fetchList = async () => {
@@ -90,8 +90,6 @@ export default function AdminQnaPage() {
                     <h1 className="text-3xl font-bold text-foreground">Q&A 内容管理</h1>
                     <button onClick={fetchList} className="text-primary hover:underline">刷新列表</button>
                 </div>
-                
-                {/* 输入表单区域 */}
                 <div className={`p-6 rounded-xl shadow-sm border mb-8 transition-colors ${editingId ? 'bg-primary/5 border-primary/30' : 'bg-card border-border'}`}>
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold text-foreground">
@@ -105,7 +103,6 @@ export default function AdminQnaPage() {
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        {/* 问题输入 */}
                         <div>
                             <label className="block text-sm font-bold text-muted-foreground mb-1">问题 (Question)</label>
                             <input 
@@ -118,8 +115,6 @@ export default function AdminQnaPage() {
                                 onChange={e => setForm({...form, question: e.target.value})}
                             />
                         </div>
-
-                        {/* 回答输入 */}
                         <div>
                             <label className="block text-sm font-bold text-muted-foreground mb-1">回答 (Answer)</label>
                             <textarea 
@@ -133,7 +128,6 @@ export default function AdminQnaPage() {
                         </div>
 
                         <div className="flex flex-col md:flex-row gap-6">
-                            {/* 权重 */}
                             <div>
                                 <label className="block text-sm font-bold text-muted-foreground mb-1">排序权重</label>
                                 <input 
@@ -145,8 +139,6 @@ export default function AdminQnaPage() {
                                 />
                                 <p className="text-xs text-muted-foreground mt-1">数字越大越靠前</p>
                             </div>
-
-                            {/* 显示开关 */}
                             <div className="flex items-center pt-6">
                                 <label className="flex items-center gap-2 cursor-pointer select-none">
                                     <input 
@@ -159,8 +151,6 @@ export default function AdminQnaPage() {
                                 </label>
                             </div>
                         </div>
-
-                        {/* 提交按钮 */}
                         <div className="pt-2 flex gap-3">
                             <button 
                                 type="submit" 
@@ -188,8 +178,6 @@ export default function AdminQnaPage() {
                         </div>
                     </form>
                 </div>
-
-                {/* 列表展示区域 */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-foreground pl-1">已发布列表 ({list.length})</h3>
                     
@@ -218,8 +206,6 @@ export default function AdminQnaPage() {
                                     {item.answer}
                                 </p>
                             </div>
-
-                            {/* 操作按钮 */}
                             <div className="flex md:flex-col gap-2 items-end justify-start min-w-[80px]">
                                 <button 
                                     onClick={() => handleEdit(item)} 

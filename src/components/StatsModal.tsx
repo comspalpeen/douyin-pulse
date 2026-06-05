@@ -1,4 +1,3 @@
-// src/components/StatsModal.tsx
 import React from 'react';
 import { RoomDetail } from '@/types/room';
 
@@ -57,14 +56,10 @@ const StatsModal: React.FC<StatsModalProps> = ({ room, isOpen, onClose }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm transition-colors duration-500" onClick={onClose}>
             <div className="relative bg-card text-card-foreground rounded-[var(--radius)] border border-border w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200 transition-colors duration-500" onClick={e => e.stopPropagation()}>
-                
-                {/* 战术边角装饰 (粉红模式自动隐藏) */}
                 <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary/50 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity z-10"></div>
                 <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary/50 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity z-10"></div>
                 <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-primary/50 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity z-10"></div>
                 <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary/50 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity z-10"></div>
-
-                {/* 标题栏 */}
                 <div className="p-4 border-b border-border flex justify-between items-center bg-muted/20 transition-colors duration-500">
                     <h3 className="font-black text-lg text-primary tracking-widest uppercase flex items-center gap-2">
                         <span className="w-2 h-2 bg-primary animate-pulse rounded-full"></span>
@@ -126,15 +121,12 @@ const StatsModal: React.FC<StatsModalProps> = ({ room, isOpen, onClose }) => {
 
                     {/* 第五行 - 拆分为两个独立卡片，突出显示涨粉 */}
                     <div className="grid grid-cols-2 gap-4">
-                        {/* 左侧：直播时长 */}
                         <div className="bg-muted border border-border p-3 rounded-[calc(var(--radius)-4px)] transition-colors duration-500">
                             <div className="text-[10px] font-bold text-muted-foreground mb-1 uppercase tracking-wider">直播时长</div>
                             <div className="text-lg font-black text-foreground font-mono">
                                 {formatDuration(getDurationSec())}
                             </div>
                         </div>
-
-                        {/* 右侧：本场涨粉 (保留了语义化的绿色/红色，但调整为适应背景的透明度写法) */}
                         <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-[calc(var(--radius)-4px)] transition-colors duration-500">
                             <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mb-1 font-bold uppercase tracking-wider">本场涨粉</div>
                             <div className={`text-xl font-black font-mono ${(room.follower_diff || 0) >= 0 ? 'text-emerald-500 drop-shadow-[0_0_5px_rgba(16,185,129,0.5)]' : 'text-destructive'}`}>

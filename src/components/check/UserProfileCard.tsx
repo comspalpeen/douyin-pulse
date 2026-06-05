@@ -88,7 +88,6 @@ export function UserProfileCard({ result }: { result: any }) {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
 
                 <div className="relative z-10 flex flex-col md:flex-row md:items-end md:justify-between gap-4 md:gap-0">
-                    {/* 左侧：等级 */}
                     <div>
                         <label className="text-sm text-muted-foreground font-bold italic mb-1 block tracking-wider">
                             财富等级
@@ -97,8 +96,6 @@ export function UserProfileCard({ result }: { result: any }) {
                             Lv.{result.pay_level}
                         </div>
                     </div>
-
-                    {/* 右侧：消费估值 */}
                     <div className="md:text-right md:pr-6">
                         <label className="text-sm text-muted-foreground font-bold italic mb-1 block tracking-wider">
                             预计累计消费估值 (RMB)

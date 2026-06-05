@@ -1,4 +1,3 @@
-// src/components/QnaModal.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -27,7 +26,6 @@ export default function QnaModal() {
             {/* 1. 悬浮入口按钮 (完全响应主题) */}
             <button 
                 onClick={() => setIsOpen(true)}
-                // 这里修改了 right-6 -> left-6
                 className="fixed bottom-6 left-6 z-40 bg-primary/10 hover:bg-primary border border-primary/50 text-primary hover:text-primary-foreground w-12 h-12 rounded-[var(--radius)] shadow-[0_0_15px_rgba(var(--color-primary),0.2)] hover:shadow-[0_0_20px_rgba(var(--color-primary),0.5)] flex items-center justify-center transition-all duration-500 hover:scale-110 group"
                 title="常见问题"
             >
@@ -36,9 +34,6 @@ export default function QnaModal() {
                 <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-current opacity-100 [.theme-pink_&]:opacity-0 transition-opacity"></div>
 
                 <span className="text-xl font-black font-mono">?</span>
-                
-                {/* Tooltip */}
-                {/* 这里修改了 right-full mr-3 -> left-full ml-3 */}
                 <span className="absolute left-full ml-3 bg-card border border-border text-foreground text-xs px-2 py-1 rounded-[var(--radius)] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-sm">
                     Q&A
                 </span>
@@ -51,11 +46,8 @@ export default function QnaModal() {
                         className="relative bg-card text-card-foreground w-full max-w-lg rounded-[var(--radius)] border border-border shadow-2xl overflow-hidden flex flex-col max-h-[80vh] transition-colors duration-500"
                         onClick={e => e.stopPropagation()}
                     >
-                        {/* 战术边角 */}
                         <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary/40 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity"></div>
                         <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary/40 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity"></div>
-
-                        {/* Header */}
                         <div className="p-4 border-b border-border flex justify-between items-center bg-muted/20 transition-colors duration-500">
                             <h3 className="font-black text-lg text-primary tracking-widest uppercase flex items-center gap-2">
                                 <span className="w-2 h-2 bg-primary animate-pulse rounded-full"></span>
@@ -63,8 +55,6 @@ export default function QnaModal() {
                             </h3>
                             <button onClick={() => setIsOpen(false)} className="text-muted-foreground hover:text-foreground text-2xl leading-none transition-colors">&times;</button>
                         </div>
-
-                        {/* Content Scroll */}
                         <div className="p-6 overflow-y-auto custom-scrollbar space-y-6 bg-background/50 transition-colors duration-500">
                             {qnaList.length === 0 ? (
                                 <div className="text-center text-primary/50 py-10 font-mono animate-pulse">NO_RECORDS_FOUND</div>
@@ -86,8 +76,6 @@ export default function QnaModal() {
                                 ))
                             )}
                         </div>
-                        
-                        {/* Footer */}
                         <div className="p-4 border-t border-border text-center text-xs font-mono text-muted-foreground bg-muted/20 transition-colors duration-500 uppercase tracking-widest">
                             CONTACT_ADMIN // @kuku
                         </div>

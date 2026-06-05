@@ -1,4 +1,3 @@
-// 文件位置: src/app/search/page.tsx
 'use client';
 
 import { useState, useEffect, Suspense, useRef, useCallback } from 'react'; 
@@ -250,10 +249,8 @@ function SearchContent() {
 
     return (
         <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
-            {/* 顶部面板 */}
             <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-md pb-4 pt-2 border-b border-border/50 mb-6" ref={searchRef}>
                 <div className="flex flex-col gap-4">
-                    {/* 搜索框行 */}
                     <div className="flex items-center gap-3">
                         <Button variant="outline" size="icon" onClick={() => router.push('/')} className="rounded-xl h-12 w-12 shrink-0 border-border" title="返回首页">
                             <Home className="w-5 h-5 text-foreground" />
@@ -278,8 +275,6 @@ function SearchContent() {
     />
                             </div>
                             <Button type="submit" className="h-12 px-8 rounded-xl font-bold shadow-sm whitespace-nowrap">搜 索</Button>
-                            
-                            {/* 🌟 弹出联想框 */}
                             {showSuggestions && suggestions.length > 0 && (
                                 <div className="absolute top-14 left-0 w-[calc(100%-100px)] bg-card border border-primary/50 rounded-xl shadow-xl z-50 overflow-hidden flex flex-col max-h-72 overflow-y-auto">
                                     <div className="text-[10px] text-muted-foreground bg-muted/50 px-4 py-2 font-mono border-b border-border font-bold">MATCHED_USERS</div>
@@ -313,8 +308,6 @@ function SearchContent() {
                             )}
                         </form>
                     </div>
-                    
-                    {/* 切换面板 */}
                     <div className="flex bg-muted p-1 rounded-xl w-fit self-start ml-[60px]">
                         <button 
                             onClick={() => handleTypeChange('chat')}
@@ -331,9 +324,6 @@ function SearchContent() {
                     </div>
                 </div>
             </div>
-
-            {/* ========== 状态展示区 ========== */}
-            
             {loading && page === 1 && (
                 <div className="text-center py-32 flex flex-col items-center">
                     <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
@@ -349,9 +339,6 @@ function SearchContent() {
                     </CardContent>
                 </Card>
             )}
-
-            {/* ========== 数据列表区 ========== */}
-
             <div className="space-y-4 pb-10">
                 {results.map((item, idx) => (
                     <Card key={`${item.room_id}-${item.created_at}-${idx}`} onClick={(e) => handleJumpToContext(e, item)} className="group bg-card border-border shadow-sm hover:shadow-lg hover:border-primary/40 transition-all cursor-pointer overflow-hidden">
@@ -385,8 +372,6 @@ function SearchContent() {
                                     </div>
                                     <span className="text-[10px] font-bold tracking-tight text-muted-foreground whitespace-nowrap bg-muted px-2.5 py-1 rounded-full border border-border">{formatTime(item.created_at)}</span>
                                 </div>
-
-                                {/* Content: 区分礼物和弹幕显示 */}
                                 {searchType === 'gift' ? (
                                     <div className="bg-orange-500/10 border border-orange-500/30 px-3.5 py-2.5 rounded-lg text-sm text-orange-500/90 break-all leading-relaxed shadow-inner flex items-center gap-2">
                                         {item.gift_icon && <img src={item.gift_icon} alt="gift" referrerPolicy="no-referrer" className="w-6 h-6 object-contain" />}

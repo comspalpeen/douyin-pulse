@@ -1,4 +1,3 @@
-// types/tieba.ts
 
 export interface TiebaComment {
   cid: string;
@@ -15,7 +14,7 @@ export interface TiebaPost {
   create_time: string;
   nick_name: string;
   portrait: string;
-  comments?: TiebaComment[]; // 🚀新增：这层楼包含的子评论
+  comments?: TiebaComment[];
 }
 
 export interface TiebaThreadDetail {

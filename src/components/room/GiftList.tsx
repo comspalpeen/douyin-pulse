@@ -1,4 +1,3 @@
-// 文件位置: src/components/room/GiftList.tsx
 'use client';
 
 import React, { useRef } from 'react';
@@ -23,9 +22,7 @@ const BadgeIcons = ({ msg }: { msg: GiftMsg }) => (
 
 const GenderIcon = ({ gender }: { gender?: number }) => {
     // 男性符号：将 text-primary 改为 text-blue-500
-    if (gender === 1) return <svg className="w-4 h-4 ml-0.5 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 14a4 4 0 100-8 4 4 0 000 8zm5-9l5-5m0 0h-5m5 0v5" /></svg>;
-    // 女性符号保持不变
-    if (gender === 2) return <svg className="w-4 h-4 ml-0.5 text-destructive shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 11a4 4 0 100-8 4 4 0 000 8zm0 4v6m-3-3h6" /></svg>;
+    if (gender === 1) return <svg className="w-4 h-4 ml-0.5 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 14a4 4 0 100-8 4 4 0 000 8zm5-9l5-5m0 0h-5m5 0v5" /></svg>;    if (gender === 2) return <svg className="w-4 h-4 ml-0.5 text-destructive shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 11a4 4 0 100-8 4 4 0 000 8zm0 4v6m-3-3h6" /></svg>;
     return null;
 };
 
@@ -58,7 +55,6 @@ export default function GiftList({ gifts, loading, onLoadMore, goToProfile, form
                                 
                                 <div className="flex justify-between items-start mb-2 border-b border-border/50 pb-2">
                                     <div className="flex items-center gap-2 overflow-hidden">
-                                        {/* ✅ 强制圆形头像 rounded-full，并阻止点击穿透 */}
                                         <div 
                                             className="relative w-6 h-6 shrink-0 cursor-pointer z-10" 
                                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToProfile(e, gift.sec_uid); }}
@@ -66,7 +62,6 @@ export default function GiftList({ gifts, loading, onLoadMore, goToProfile, form
                                             <img src={gift.avatar_url || '/default-avatar.png'} alt="avatar" className="w-6 h-6 rounded-full object-cover border border-border" />
                                         </div>
                                         <div className="min-w-0 flex items-center gap-1">
-                                            {/* ✅ 阻止点击穿透 */}
                                             <span 
                                                 className="text-xs font-bold truncate text-foreground cursor-pointer hover:text-primary transition-colors max-w-[100px] uppercase [.theme-pink_&]:normal-case relative z-10" 
                                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToProfile(e, gift.sec_uid); }}

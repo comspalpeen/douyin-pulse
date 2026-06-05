@@ -1,13 +1,12 @@
-// src/app/layout.tsx
 import type { Metadata } from 'next';
 import { Inter, Share_Tech_Mono, Nunito } from 'next/font/google';
 import './globals.css';
 import QueryProvider from '@/components/query-provider'; 
-import AiChatWidget from '@/components/AiChatWidget' // 👈 1. 引入它
+import AiChatWidget from '@/components/AiChatWidget' // 1. 引入它
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 // 战术等宽字体
 const techMono = Share_Tech_Mono({ weight: '400', subsets: ['latin'], variable: '--font-mono' });
-// 🎀 新增：甜美圆润糖果字体
+// 甜美圆润糖果字体
 const nunito = Nunito({ weight: ['400', '600', '700', '900'], subsets: ['latin'], variable: '--font-cute' });
 
 export const metadata: Metadata = {
@@ -40,7 +39,7 @@ export default function RootLayout({
         />
         <QueryProvider>
           {children}
-          <AiChatWidget /> {/* 👈 2. 放在这！所有页面都会有它，且不会被销毁 */}
+          <AiChatWidget /> {/* 2. 放在这！所有页面都会有它，且不会被销毁 */}
         </QueryProvider>
       </body>
     </html>

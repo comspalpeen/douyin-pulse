@@ -1,8 +1,5 @@
-// 文件位置: src/hooks/useRoomUI.ts
 import { useState, useEffect } from 'react';
 import { SearchTarget } from '@/types/room';
-
-// ✅ 加入防抖 Hook，防止键盘连续输入时疯狂发请求
 function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState(value);
     useEffect(() => {
@@ -27,7 +24,7 @@ export function useRoomUI() {
     const [filterStartTime, setFilterStartTime] = useState('');
     const [filterEndTime, setFilterEndTime] = useState('');
 
-    // 🔥 核心：监听时间输入框，并在停手 800 毫秒后才会更新到请求体
+    // 核心：监听时间输入框，并在停手 800 毫秒后才会更新到请求体
     const debouncedFilterStartTime = useDebounce(filterStartTime, 800);
     const debouncedFilterEndTime = useDebounce(filterEndTime, 800);
 
@@ -36,7 +33,6 @@ export function useRoomUI() {
     const [isStatsOpen, setIsStatsOpen] = useState(false);
 
     const handleSearch = () => { 
-        // 🔥 修改：每次点击搜索，无论内容变没变，都强制让触发器 +1
         setAppliedSearch(inputSearch); 
         setSearchTrigger(prev => prev + 1);
     };
@@ -66,7 +62,6 @@ export function useRoomUI() {
             filterStartTime, setFilterStartTime,
             filterEndTime, setFilterEndTime,
             searchTrigger,
-            // ✅ 导出防抖后的值给 API 层面使用
             debouncedFilterStartTime,
             debouncedFilterEndTime
         },

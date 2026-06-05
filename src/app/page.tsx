@@ -1,4 +1,3 @@
-// src/app/page.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -6,9 +5,8 @@ import AuthorCard from '../components/AuthorCard';
 import { Author } from '../types/author';
 import QnaModal from '@/components/QnaModal';
 import DailyReportModal from '@/components/DailyReportModal';
-import { Search, MessageSquare, Wrench } from "lucide-react";
 import { useRouter } from 'next/navigation';
-
+import { Search, MessageSquare, FileText } from "lucide-react";
 import ThemeSwitcher from '@/components/ThemeSwitcher';
 import AiChatWidget from '@/components/AiChatWidget';
 
@@ -59,21 +57,12 @@ export default function Home() {
 
                         <button 
                             onClick={() => setIsReportOpen(true)}
-                            className="relative border border-primary/50 bg-primary/10 text-primary px-6 h-10 font-bold hover:bg-primary hover:text-primary-foreground transition-all group rounded-[var(--radius)]"
-                        >
-                            <div className="absolute top-0 left-0 w-1 h-1 border-t border-l border-current opacity-100 [.theme-pink_&]:opacity-0 transition-opacity"></div>
-                            <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-current opacity-100 [.theme-pink_&]:opacity-0 transition-opacity"></div>
-                            日报
-                        </button>
-
-    <button 
-                            onClick={() => router.push('/tools')}
                             className="relative border border-primary/50 bg-primary/10 text-primary px-6 h-10 font-bold hover:bg-primary hover:text-primary-foreground transition-all group rounded-[var(--radius)] flex items-center gap-2"
                         >
                             <div className="absolute top-0 left-0 w-1 h-1 border-t border-l border-current opacity-100 [.theme-pink_&]:opacity-0 transition-opacity"></div>
                             <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-current opacity-100 [.theme-pink_&]:opacity-0 transition-opacity"></div>
-                            <Wrench className="w-4 h-4" />
-                            <span>工具</span>
+                            <FileText className="w-4 h-4" />
+                            <span>日报</span>
                         </button>
 
                         <button 

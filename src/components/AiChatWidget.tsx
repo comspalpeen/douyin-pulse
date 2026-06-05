@@ -1,4 +1,3 @@
-// src/components/AiChatWidget.tsx
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -15,14 +14,11 @@ export default function AiChatWidget() {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [input, setInput] = useState('');
-    
-    // 💡 纯净状态：不读取缓存，刷新页面直接变回空数组
     const [messages, setMessages] = useState<Message[]>([]);
     
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
-        // 加入 100ms 延迟，确保 React 的 DOM 和打字机文字高度完全渲染撑开后，再执行滚动
         setTimeout(() => {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }, 150);
@@ -69,16 +65,12 @@ export default function AiChatWidget() {
 
     const handleOpenChat = () => {
         setIsOpen(true);
-        
-        // 💡 只有点开面板且当前无记录时，才发送第一句欢迎语
         if (messages.length === 0) {
             setMessages([
                 { role: 'assistant', content: '我是AI小助手，基于GLM-4.6V模型，目前仅对**本月数据**进行分析，AI立场与作者本人无关，回答较慢耐心等待。' }
             ]);
         }
     };
-
-    // 手动清除（为你保留了垃圾桶图标，如果你不想刷新网页也随时可以清空重聊）
     const clearHistory = () => {
         if (window.confirm('确定要清除所有分析记录吗？')) {
             setMessages([]);
@@ -89,8 +81,6 @@ export default function AiChatWidget() {
         <div className="fixed bottom-6 right-6 z-50">
             {isOpen && (
                 <div className="mb-4 w-[90vw] md:w-[450px] h-[600px] bg-background/95 backdrop-blur-md border border-primary/50 shadow-[0_0_30px_rgba(var(--color-primary),0.2)] flex flex-col rounded-[var(--radius)] overflow-hidden transition-all duration-300 animate-in slide-in-from-bottom-5">
-                    
-                    {/* 头部 */}
                     <div className="h-14 border-b border-primary/30 bg-primary/10 flex items-center justify-between px-4">
                         <div className="flex items-center gap-2 text-primary font-mono font-bold tracking-widest">
                             <Terminal className="w-5 h-5" />
@@ -105,8 +95,6 @@ export default function AiChatWidget() {
                             </button>
                         </div>
                     </div>
-
-                    {/* 消息展示区 */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                         {messages.map((msg, index) => (
                             <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -136,8 +124,6 @@ export default function AiChatWidget() {
                         )}
                         <div ref={messagesEndRef} />
                     </div>
-
-                    {/* 快捷指令区 */}
                     {messages.length === 1 && (
                         <div className="px-4 pb-2 flex flex-wrap gap-2">
                             {quickCommands.map((cmd, i) => (
@@ -147,8 +133,6 @@ export default function AiChatWidget() {
                             ))}
                         </div>
                     )}
-
-                    {/* 输入区 */}
                     <div className="p-4 border-t border-primary/30 bg-background">
                         <div className="flex gap-2">
                             <input

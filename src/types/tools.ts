@@ -1,4 +1,3 @@
-// src/types/tools.ts
 export interface AuthorSuggestion {
   sec_uid: string;
   nickname: string;

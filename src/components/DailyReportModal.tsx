@@ -1,4 +1,3 @@
-// src/components/DailyReportModal.tsx
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -63,7 +62,6 @@ export default function DailyReportModal({ isOpen, onClose }: DailyReportModalPr
             if (lampDiff !== 0) return lampDiff;
             return b.follower_count - a.follower_count;
         });
-        // --- 修改结束 ---
 
         return items;
     }, [data, selectedDate]);
@@ -85,11 +83,8 @@ export default function DailyReportModal({ isOpen, onClose }: DailyReportModalPr
                 className="relative bg-card text-card-foreground w-full max-w-5xl rounded-[var(--radius)] border border-border shadow-2xl flex flex-col max-h-[90vh] overflow-hidden transition-colors duration-500"
                 onClick={e => e.stopPropagation()}
             >
-                {/* 战术边角 */}
                 <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary/40 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity z-30"></div>
                 <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary/40 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity z-30"></div>
-
-                {/* 顶部栏 */}
                 <div className="p-3 md:p-4 border-b border-border flex justify-between items-center bg-card shrink-0 z-20 transition-colors duration-500">
                     <div className="flex items-center gap-2 md:gap-4">
                         <h3 className="font-black text-lg md:text-xl flex items-center gap-2 text-foreground tracking-widest uppercase transition-colors">
@@ -117,8 +112,6 @@ export default function DailyReportModal({ isOpen, onClose }: DailyReportModalPr
                         <span className="text-xl">&times;</span>
                     </button>
                 </div>
-
-                {/* 内容区 */}
                 <div className="flex-1 overflow-auto bg-background/50 relative transition-colors duration-500 custom-scrollbar">
                     {loading ? (
                         <div className="py-20 text-center font-mono font-bold tracking-widest text-primary animate-pulse transition-colors">SYNCING_DATA...</div>

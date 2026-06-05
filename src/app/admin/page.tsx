@@ -6,11 +6,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-foreground mb-8">控制台仪表盘</h1>
-        
-        {/* 卡片网格布局 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* 1. 账号池管理入口 */}
           <Link href="/admin/cookies" className="block p-6 bg-card border border-border rounded-xl hover:shadow-lg hover:border-primary/50 transition-all group">
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">🍪</span>
@@ -19,8 +15,6 @@ export default function AdminDashboard() {
             <h3 className="text-xl font-bold text-foreground group-hover:text-primary">账号池管理</h3>
             <p className="text-muted-foreground mt-2 text-sm">管理爬虫使用的抖音 Cookie，添加、更新或删除失效账号。</p>
           </Link>
-
-          {/* 2. ✅ 新增：Q&A 管理入口 */}
           <Link href="/admin/qna" className="block p-6 bg-card border border-border rounded-xl hover:shadow-lg hover:border-accent/50 transition-all group">
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">💡</span>
@@ -38,8 +32,6 @@ export default function AdminDashboard() {
             <h3 className="text-xl font-bold text-foreground group-hover:text-primary">系统控制面板</h3>
             <p className="text-muted-foreground mt-2 text-sm">控制 czlevel 接口联网开关、限流参数和业务盾牌策略。</p>
           </Link>
-
-          {/* 4. (可选) 直播间监控入口 - 如果你有这个页面的话 */}
           <Link href="/" className="block p-6 bg-card border border-border rounded-xl hover:shadow-lg hover:border-primary transition-all group">
             <div className="flex items-center justify-between mb-4">
               <span className="text-4xl">📺</span>

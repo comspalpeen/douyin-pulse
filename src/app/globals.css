@@ -60,7 +60,7 @@
     --radius: 1rem;
     --streamer: 190 90% 50%;
     
-    /* 🎀 新增：甜心圆润字体栈 (Nunito + 幼圆/圆体) */
+    /* 甜心圆润字体栈 (Nunito + 幼圆/圆体) */
     --font-body: var(--font-cute), 'Yuanti SC', 'YouYuan', 'Microsoft Yahei', sans-serif;
   }
   * { @apply border-border; }
@@ -184,7 +184,7 @@
   font-weight: bold;
   box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
 }
-/* 🎀 终极魔法：在粉红模式下，强制所有元素（包括原本写了 font-mono 的战术元素）使用甜美圆润字体 */
+/* 在粉红模式下，强制所有元素（包括原本写了 font-mono 的战术元素）使用甜美圆润字体 */
 .theme-pink, 
 .theme-pink * {
   font-family: var(--font-body) !important;

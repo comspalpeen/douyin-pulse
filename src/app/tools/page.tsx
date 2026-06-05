@@ -2,8 +2,6 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// 导入拆分后的组件与钩子
 import ToolsHeader from '@/components/tools/ToolsHeader';
 import FilterSidebar from '@/components/tools/FilterSidebar';
 import GiftPanel from '@/components/tools/GiftPanel';
@@ -57,7 +55,6 @@ export default function ToolsPage() {
         <ToolsHeader />
 
         <div className="grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
-          {/* 左侧筛选侧边栏 */}
           <FilterSidebar 
             activeTab={activeTab}
             authorQuery={authorQuery}
@@ -74,8 +71,6 @@ export default function ToolsPage() {
             setEndTime={setEndTime}
             applyRoomTime={applyRoomTime}
           />
-
-          {/* 右侧主操作区 */}
           <div className="border-primary/15 bg-card/85 py-4 rounded-xl shadow-sm">
             <div className="px-6 space-y-2">
               <h2 className="text-xl font-black tracking-tight">操作面板</h2>

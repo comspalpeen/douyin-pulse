@@ -38,7 +38,6 @@ export default function CheckPage() {
   };
 
   return (
-    // 🚀 修改点 1：移除固定背景色 bg-[#020617] 和 text-slate-100
     // 使用全局变量 bg-background 和 text-foreground 让页面背景自动跟随主题切换
     <div className="min-h-screen bg-background text-foreground p-6 md:p-24 flex flex-col items-center font-sans pb-32 transition-colors duration-500">
       <div className="w-full max-w-4xl space-y-8">
@@ -50,30 +49,19 @@ export default function CheckPage() {
           onSearch={onSearch} 
           loading={loading} 
         />
-
-        {/* 错误提示 */}
         {result?.error && (
-          // 🚀 修改点 2：将写死的红色替换为基于全局 --destructive 变量的颜色
           // 使用动态圆角 rounded-[var(--radius)] 适配战术(直角)与粉红(圆角)模式
           <div className="p-4 bg-destructive/10 border border-destructive/50 rounded-[var(--radius)] text-destructive text-center flex items-center justify-center gap-2 transition-all duration-500">
              <AlertCircle className="w-5 h-5"/> {result.error}
           </div>
         )}
-
-        {/* 成功结果 */}
         {result && !result.error && (
           <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-4 duration-700">
-            
-            {/* 2. 用户画像 */}
             <UserProfileCard result={result} />
-
-            {/* 3. 单次透视 + 收藏 */}
             <RoomRelationCard 
                 userSecUid={result.sec_uid} 
                 onRefreshFavorites={fetchFavorites} 
             />
-
-            {/* 4. 批量检测收纳仓 */}
             <FavoritesSection 
                 userSecUid={result.sec_uid} 
                 favorites={favorites}

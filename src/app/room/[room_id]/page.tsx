@@ -1,4 +1,3 @@
-// 文件位置: src/app/room/[room_id]/page.tsx
 'use client';
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';

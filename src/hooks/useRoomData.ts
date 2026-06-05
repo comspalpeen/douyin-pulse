@@ -1,4 +1,3 @@
-// 文件位置: src/hooks/useRoomData.ts
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChatMsg, GiftMsg, PkBattle, RoomDetail, SearchTarget } from '@/types/room';
@@ -19,8 +18,7 @@ function uniqueData<T>(arr: T[], keyFn: (item: T) => string): T[] {
         return true;
     });
 }
-
-// 🔥 终极无脑暴力时间组装器 (去掉了所有Clamp，去掉了所有多余时区计算)
+// 按直播开播日和输入时分组装查询时间，避免浏览器时区偏移。
 export const parseTimeFilter = (timeStr: string | undefined, roomStart: any) => {
     if (!timeStr || !roomStart) return null;
     
@@ -30,8 +28,7 @@ export const parseTimeFilter = (timeStr: string | undefined, roomStart: any) => 
     const [inputH, inputM] = timeStr.split(':').map(Number);
     if (isNaN(inputH) || isNaN(inputM)) return null;
 
-    // 解析出数据库存的【伪UTC时间】里的时分和日期
-    // 比如 startStr 是 "2026-02-12T15:53:08.962Z"
+    // 数据库存的是以 Z 结尾的本地时间字符串，这里只读取日期和时分。
     const timePart = startStr.split('T')[1]; 
     const startH = parseInt(timePart.split(':')[0], 10);
     const startM = parseInt(timePart.split(':')[1], 10);
@@ -39,15 +36,15 @@ export const parseTimeFilter = (timeStr: string | undefined, roomStart: any) => 
     const datePart = startStr.split('T')[0]; 
     const [year, month, day] = datePart.split('-').map(Number);
 
-    // 用 Date.UTC 只是为了方便处理跨越自然月的进位，没有任何时区偏移
+    // Date.UTC 只用于处理跨自然月进位，不引入本地时区换算。
     let targetEpoch = Date.UTC(year, month - 1, day, inputH, inputM, 0, 0);
 
-    // 唯一智能点：如果你输入的时分，比开播的时分还小，系统认定你在搜次日 (比如 23:00 开播，搜 01:00)
+    // 输入时分早于开播时分时，按次日查询。
     if (inputH * 60 + inputM < startH * 60 + startM) {
         targetEpoch += 86400000; 
     }
 
-    // 强制转换为 Z 结尾的文本，返回给你想要的确切时间！绝不自我阉割！
+    // 返回与后端存储格式一致的 Z 结尾字符串。
     return new Date(targetEpoch).toISOString();
 };
 
@@ -118,8 +115,6 @@ export function useRoomData(roomId: string, jumpTime: string | null, searchParam
         try {
             const limit = (isInitial && jumpTime) ? 50 : 50;
             let url = `/api/rooms/${roomId}/${type}s?${getCommonParams(limit, type)}`;
-
-            // ✅ 解析时只传入 created_at，不传 end_time（彻底取消下播时间限制）
             if (searchParams.filterStartTime && roomInfo?.created_at) {
                 const st = parseTimeFilter(searchParams.filterStartTime, roomInfo.created_at);
                 if (st) url += `&start_time=${encodeURIComponent(st)}`;
@@ -226,11 +221,7 @@ export function useRoomData(roomId: string, jumpTime: string | null, searchParam
         }, 3000);
         return () => clearInterval(interval);
     }, [roomId, jumpTime, roomInfo, searchParams]);
-
-    // 🔥 修复点：将这段代码放入 useRoomData 函数内部！
     const effectiveMinPrice = searchParams.enableMinPrice ? searchParams.minPrice : null;
-
-    // ✅ 只监听所有的依赖，只要防抖后的值更新，立即触发拉取新数据
     useEffect(() => {
         setChats([]); setGifts([]); setHasMoreChats(true); setHasMoreGifts(true); setPkInitialized(false); setPks([]);
         loadOldData('chat', true);
@@ -238,10 +229,10 @@ export function useRoomData(roomId: string, jumpTime: string | null, searchParam
     }, [
         roomId, jumpTime, 
         searchParams.appliedSearch, 
-        searchParams.searchTarget,     // 🔥 新增：监听下拉选项（全部/弹幕/礼物）
+        searchParams.searchTarget,
         searchParams.searchTrigger,
         searchParams.enableMinPrice, 
-        effectiveMinPrice,             // 🔥 使用衍生出来的值
+        effectiveMinPrice,             // 使用衍生出来的值
         searchParams.filterGender, searchParams.filterMinPayGrade, searchParams.filterMinFansLevel,
         searchParams.filterStartTime, searchParams.filterEndTime 
     ]);
@@ -253,7 +244,7 @@ export function useRoomData(roomId: string, jumpTime: string | null, searchParam
         loadOldChats: () => loadOldData('chat'),
         loadOldGifts: () => loadOldData('gift'),
         loadPks, 
-        reloadPks, // ✅ 将强制刷新方法暴露给外层组件
+        reloadPks, // 将强制刷新方法暴露给外层组件
         jumpError, pkInitialized 
     };
 }

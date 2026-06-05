@@ -1,4 +1,3 @@
-// 文件位置: src/app/admin/cookies/page.tsx
 "use client";
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -150,8 +149,6 @@ export default function CookieManagerPage() {
   return (
     <div className="p-6 md:p-10 animate-in fade-in duration-300">
       <div className="max-w-6xl mx-auto space-y-8">
-        
-        {/* 头部导航或面包屑 */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border pb-6">
             <div>
                 <h1 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-2">
@@ -170,8 +167,6 @@ export default function CookieManagerPage() {
                 </Button>
             </div>
         </div>
-
-        {/* 添加/编辑区域 */}
         <Card className={`shadow-xl transition-all duration-300 border ${editingItem ? 'bg-primary/5 border-primary/30' : 'bg-card border-border'}`}>
           <CardHeader className="pb-4">
             <div className="flex justify-between items-center">
@@ -225,8 +220,6 @@ export default function CookieManagerPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* 列表区域 */}
         <Card className="shadow-xl bg-card border-border overflow-hidden w-full">
             {/* 加入 overflow-x-auto 兜底，防止极端小屏幕下的布局崩塌 */}
             <div className="overflow-x-auto w-full">
@@ -235,9 +228,7 @@ export default function CookieManagerPage() {
                     <TableRow className="hover:bg-transparent border-border">
                         <TableHead className="w-[80px] md:w-[100px] text-center font-bold text-foreground">状态</TableHead>
                         <TableHead className="w-[120px] md:w-[200px] font-bold text-foreground">账号备注</TableHead>
-                        {/* 👇 关键修改：在这里限制最大宽度 */}
                         <TableHead className="max-w-[200px] md:max-w-[400px] lg:max-w-[500px] font-bold text-foreground">Cookie 摘要</TableHead>
-                        {/* 👇 操作列固定右侧 (可选的 sticky 写法可以进一步保证不被挤出) */}
                         <TableHead className="w-[120px] md:w-[150px] text-center font-bold text-foreground">操作</TableHead>
                     </TableRow>
                     </TableHeader>
@@ -260,7 +251,6 @@ export default function CookieManagerPage() {
                                 </div>
                                 <div className="text-[10px] md:text-xs text-muted-foreground mt-1 font-medium whitespace-nowrap">更新于: {formatDate(item.updated_at)}</div>
                             </TableCell>
-                            {/* 👇 关键修改：添加最大宽度和 overflow-hidden */}
                             <TableCell className="max-w-[200px] md:max-w-[400px] lg:max-w-[500px]">
                                 <div className="font-mono text-[10px] md:text-xs text-muted-foreground break-all line-clamp-2 bg-muted/50 p-2 rounded-md border border-border overflow-hidden text-ellipsis">
                                     {isExpired ? (

@@ -1,4 +1,3 @@
-// src/components/ThemeSwitcher.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -61,17 +60,15 @@ const ThemeSwitcher = () => {
           <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-current"></div>
         </>
       )}
-
-      {/* 图标切换 */}
       <div className="relative w-5 h-5">
         <Crosshair className={`absolute inset-0 w-full h-full transition-all duration-500 ${isTactical ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 rotate-90 scale-50'}`} />
         <Heart className={`absolute inset-0 w-full h-full fill-current transition-all duration-500 ${!isTactical ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`} />
       </div>
 
-      {/* 文字切换 */}
+      {/* 文字切换
       <span className="relative z-10">
-        {isTactical ? '三角洲' : '甜美风'}
-      </span>
+        {isTactical ? '' : ''}
+      </span> */}
       
       {/* 粉红风格光晕动画 */}
       {!isTactical && (

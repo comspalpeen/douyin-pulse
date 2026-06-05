@@ -1,4 +1,3 @@
-// 文件位置: src/components/room/MobileRoomView.tsx
 'use client';
 
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
@@ -29,7 +28,6 @@ export default function MobileRoomView({
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
         >
-            {/* Tabs */}
             <div className="flex border-b border-border bg-card z-10 shrink-0">
                 <button 
                     onClick={() => setTab('chat')} 
@@ -54,9 +52,7 @@ export default function MobileRoomView({
             <div className="flex-1 relative bg-background min-h-0 mt-1">
                 {tab === 'chat' && (
                     <div className="absolute inset-0 flex flex-col">
-                        {/* ✅ 已彻底删除移动端弹幕页的冗余栏 */}
                         <div className="flex-1 min-h-0 relative">
-                            {/* ✅ 悬浮交互气泡 */}
                             <div className="absolute top-2 right-2 z-50 flex gap-2 items-center pointer-events-none">
                                 {data.loadingChats && !jumpTime && <span className="text-[10px] uppercase font-black tracking-widest text-primary animate-pulse bg-background/80 px-2 py-1 rounded backdrop-blur-sm shadow-sm border border-border/50">Loading...</span>}
                                 {jumpTime && (
@@ -79,7 +75,6 @@ export default function MobileRoomView({
                 )}
                 {tab === 'gift' && (
                     <div className="absolute inset-0 flex flex-col">
-                        {/* ✅ 已按要求额外删除了移动端礼物记录的冗余栏 */}
                         <div className="flex-1 min-h-0 bg-background/50 relative">
                             <div className="absolute top-2 right-2 z-50 pointer-events-none">
                                  {data.loadingGifts && <span className="text-[10px] uppercase font-black tracking-widest text-primary animate-pulse bg-background/80 px-2 py-1 rounded backdrop-blur-sm shadow-sm border border-border/50">Loading...</span>}

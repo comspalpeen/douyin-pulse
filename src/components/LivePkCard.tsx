@@ -19,10 +19,7 @@ export default function LivePkCard({ roomId, roomUserId, onPkFinish, liveStatus 
     
     const currentBattleIdRef = useRef<string | null>(null);
     const finishedBattleIdRef = useRef<string | null>(null); 
-
-    // ==========================================
     // 1. SSE 数据监听
-    // ==========================================
     useEffect(() => {
         if (liveStatus !== 1) {
             return;
@@ -56,18 +53,11 @@ export default function LivePkCard({ roomId, roomUserId, onPkFinish, liveStatus 
             if (reconnectRef.current !== null) window.clearTimeout(reconnectRef.current);
         };
     }, [roomId, liveStatus]);
-
-    // ==========================================
     // 2. 内部时钟：驱动倒计时
-    // ==========================================
     useEffect(() => {
         const timer = setInterval(() => setNow(Date.now()), 1000);
         return () => clearInterval(timer);
     }, []);
-
-    // ==========================================
-    // 🌟 新增：拦截结算状态，触发刷新并延迟销毁
-    // ==========================================
     useEffect(() => {
         if (snapshot?.status === 2 && snapshot.start_info?.battle_id !== finishedBattleIdRef.current) {
             finishedBattleIdRef.current = snapshot.start_info?.battle_id;
@@ -84,13 +74,9 @@ export default function LivePkCard({ roomId, roomUserId, onPkFinish, liveStatus 
             return () => clearTimeout(timer);
         }
     }, [snapshot?.status, snapshot?.start_info?.battle_id, onPkFinish]);
-
-    // ==========================================
     // 3. 核心判定：空数据、无开始包、断流10秒 -> 完全隐藏
-    // ==========================================
     const isStale = useMemo(() => {
         if (!snapshot || !snapshot.updated_at) return false;
-        // ✅ 关键修复：如果已经是状态 2 (结算中)，绝不视为超时，交给上面的 setTimeout 去销毁
         if (snapshot.status === 2) return false; 
         return (now - snapshot.updated_at) > 30000;
     }, [snapshot, now]);
@@ -104,20 +90,14 @@ export default function LivePkCard({ roomId, roomUserId, onPkFinish, liveStatus 
     if (!snapshot || !snapshot.start_info || isStale) {
         return null;
     }
-
-    // ==========================================
     // 4. 倒计时计算
-    // ==========================================
     const { start_time_ms, duration } = snapshot.start_info;
     const timeLeft = Math.max(0, Math.floor((start_time_ms + duration * 1000 - now) / 1000));
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
     const timeString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     const isFreeForAll = snapshot.teams && snapshot.teams.length > 2;
-
-    // ==========================================
     // 渲染模式 1：四人混战 / 个人赛
-    // ==========================================
     if (isFreeForAll) {
         const sortedTeams = [...snapshot.teams].sort((a, b) => b.team_score - a.team_score);
         const maxScore = Math.max(...sortedTeams.map(t => t.team_score), 1);
@@ -184,11 +164,7 @@ export default function LivePkCard({ roomId, roomUserId, onPkFinish, liveStatus 
             </Card>
         );
     }
-
-    // ==========================================
     // 渲染模式 2：1v1 / 阵营战 (红蓝对抗模式)
-    // ==========================================
-
     const leftTeam = snapshot.teams.find((t: any) => 
     t.anchors?.some((a: any) => String(a.user_id) === String(roomUserId))
 ) || snapshot.teams[0];
@@ -202,13 +178,15 @@ export default function LivePkCard({ roomId, roomUserId, onPkFinish, liveStatus 
     const totalScore = Math.max(leftScore + rightScore, 1);
     const leftPercent = (leftScore / totalScore) * 100;
     const rightPercent = 100 - leftPercent;
-
+    const isOneVsOne = leftTeam.anchors?.length === 1 && rightTeam.anchors?.length === 1;
+    const battleTitle = isOneVsOne ? "实时 PK (个人战)" : "实时 PK (阵营战)";
     return (
         <Card className="mb-4 overflow-hidden border-border bg-card shadow-sm animate-in fade-in duration-300">
             <CardContent className="p-4">
                 <div className="mb-4 flex items-center justify-between border-b border-border/50 pb-3">
                     <div className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                        <Swords className="h-4 w-4" /> 实时 PK (组队)
+                        <Swords className="h-4 w-4" /> 
+                        {battleTitle}
                     </div>
                     
                     <div className="flex items-center gap-2">

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// 🔥 引入了 X 图标用于重置清空
 import { Search, CheckCircle2, XCircle, Activity, Users, X } from "lucide-react";
 
 interface AuthorInfo {
@@ -11,7 +10,7 @@ interface AuthorInfo {
   live_status: number;
 }
 
-// 🔥 扩展结果接口，增加头像和昵称
+// 增加头像和昵称
 interface CheckResult {
   display_id: string;
   nickname: string;
@@ -77,8 +76,6 @@ export default function CzLevelChecker() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative z-10">
       
       <div data-slot="card" className="w-full max-w-md p-6 sm:p-8 flex flex-col gap-6">
-        
-        {/* === 顶部：陈泽实时资料 === */}
         {authorInfo ? (
           <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/30 border border-border/50">
             <div className="relative">
@@ -113,8 +110,6 @@ export default function CzLevelChecker() {
         ) : (
           <div className="h-24 rounded-lg bg-muted/20 animate-pulse border border-border/30" />
         )}
-
-        {/* === 中间：输入与查询区 === */}
         <div>
           <h1 className="text-2xl font-black mb-2 flex items-center gap-2">
             <Activity className="text-primary" />
@@ -136,8 +131,6 @@ export default function CzLevelChecker() {
                 onKeyDown={(e) => e.key === "Enter" && handleCheck()}
               />
               <Search className="absolute left-3 text-muted-foreground" size={18} />
-              
-              {/* 🔥 实用补丁：一键清除按钮 */}
               {displayId && (
                 <button
                   onClick={() => setDisplayId("")}
@@ -170,8 +163,6 @@ export default function CzLevelChecker() {
             </button>
           </div>
         </div>
-
-        {/* === 底部：结果反馈区 === */}
         {error && (
           <div className="p-3 bg-destructive/10 border border-destructive/30 text-destructive rounded-md text-sm text-center font-bold animate-in fade-in zoom-in duration-300">
             {error}
@@ -184,8 +175,6 @@ export default function CzLevelChecker() {
               ? "bg-green-500/10 border-green-500/30" 
               : "bg-destructive/10 border-destructive/30"
           }`}>
-            
-            {/* 🔥 实用补丁：用户信息微型卡片 */}
             <div className="flex items-center gap-3 mb-6 p-3 w-full bg-background/50 rounded-lg border border-border/50">
               <img
                 src={result.avatar || "https://p3-webcast.douyinpic.com/img/webcast/mystery_man_thumb_avatar.png~tplv-obj.image"}

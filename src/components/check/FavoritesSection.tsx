@@ -14,8 +14,6 @@ import {
     RotateCcw,
     RefreshCw
 } from "lucide-react";
-
-// --- 类型定义 ---
 interface Favorite {
     sec_uid: string;
     nickname: string;

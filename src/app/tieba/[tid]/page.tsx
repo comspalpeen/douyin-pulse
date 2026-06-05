@@ -21,7 +21,7 @@ const HighlightText = ({ text, keyword }: { text: string; keyword: string }) => 
     </span>
   );
 };
-// 🚀 核心：富文本与多媒体渲染引擎
+// 富文本与多媒体渲染引擎
 const RichTextRenderer = ({ rawContents, fallbackText, keyword }: { rawContents?: string, fallbackText: string, keyword: string }) => {
   // 如果没有结构化数据，兜底使用纯文本高亮
   if (!rawContents) return <HighlightText text={fallbackText} keyword={keyword} />;
@@ -45,7 +45,7 @@ const RichTextRenderer = ({ rawContents, fallbackText, keyword }: { rawContents?
                   src={item.src} 
                   alt="情报图片" 
                   className="max-w-full sm:max-w-md rounded-md border-2 border-border/50 shadow-sm"
-                  referrerPolicy="no-referrer" // 💡 破解百度图片防盗链
+                  referrerPolicy="no-referrer"
                   loading="lazy"
                 />
               </div>
@@ -95,7 +95,7 @@ export default function ThreadDetailPage() {
   if (!detail) return <div className="p-10 text-center text-muted-foreground animate-pulse">正在加载详情...</div>;
   if ("error" in detail) return <div className="p-10 text-center text-destructive">{detail.error as string}</div>;
 
-  // 🚀 核心过滤逻辑升级：只要主回复或者任何一个子评论命中了关键词，这层楼就予以保留！
+  // 只要主回复或者任何一个子评论命中了关键词，这层楼就予以保留！
   // 并且如果是“只看关键字”模式，我们会把未命中关键字的子评论隐藏，保持界面极度干净。
   const displayedPosts = showOnlyKeyword && keyword
     ? detail.posts.reduce((acc, post) => {
@@ -116,8 +116,6 @@ export default function ThreadDetailPage() {
 
   return (
     <div className="max-w-5xl mx-auto min-h-screen bg-background pb-20 border-x border-border/30 shadow-2xl">
-      
-      {/* 顶部控制台：返回键 + 标题 + 侦测雷达 */}
       <div className="bg-card border-b border-border sticky top-0 z-20 shadow-sm p-4 md:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -132,8 +130,6 @@ export default function ThreadDetailPage() {
           <h1 className="text-xl font-bold text-card-foreground line-clamp-2 leading-tight">
             {detail.thread.title}
           </h1>
-
-          {/* 🚀 新增：跳转贴吧原贴的快捷按钮 */}
           <a
             href={`https://tieba.baidu.com/p/${tid}`}
             target="_blank"
@@ -166,15 +162,11 @@ export default function ThreadDetailPage() {
           </div>
         )}
       </div>
-
-      {/* 经典贴吧列表流 */}
       <div className="mt-4 px-2 md:px-6 space-y-3">
-        
-        {/* 1楼：楼主 (不受开关控制，始终提供上下文) */}
         <PostRow 
           post={{
             ...detail.thread, 
-            // 🚀 核心改动：如果有正文，就把标题和正文拼起来；如果没有，就只显示标题
+            // 核心改动：如果有正文，就把标题和正文拼起来；如果没有，就只显示标题
             content: detail.thread.content 
               ? `${detail.thread.title}\n\n${detail.thread.content}` 
               : detail.thread.title
@@ -184,8 +176,6 @@ export default function ThreadDetailPage() {
           keyword={keyword} 
           isHost={true}
         />
-
-        {/* 2楼及以后的回复列表 */}
         {displayedPosts.length > 0 ? (
           displayedPosts.map((post, index) => (
             <PostRow 
@@ -212,10 +202,7 @@ function PostRow({ post, floor, keyword, isHost = false }: { post: any, floor: n
   
   return (
     <div className="flex flex-col sm:flex-row bg-card border border-border shadow-sm rounded-md overflow-hidden">
-      
-      {/* 左侧：用户信息区 */}
       <div className="sm:w-36 bg-muted/20 border-b sm:border-b-0 sm:border-r border-border p-4 flex sm:flex-col items-center sm:items-center gap-3 shrink-0">
-        {/* 🚀 楼主/回复者的头像跳转 */}
         <a href={userUrl} target="_blank" rel="noopener noreferrer" className="relative block hover:opacity-80 transition-opacity">
           <img 
             src={avatarUrl} 
@@ -237,8 +224,6 @@ function PostRow({ post, floor, keyword, isHost = false }: { post: any, floor: n
           {post.nick_name}
         </a>
       </div>
-      
-      {/* 右侧：正文区 + 楼中楼区 */}
       <div className="flex-1 p-5 flex flex-col min-w-0">
         <div className="text-foreground text-base leading-relaxed">
           <RichTextRenderer 
@@ -247,15 +232,12 @@ function PostRow({ post, floor, keyword, isHost = false }: { post: any, floor: n
             keyword={keyword} 
           />
         </div>
-        
-        {/* 嵌套楼中楼渲染 (子评论区) */}
         {post.comments && post.comments.length > 0 && (
           <div className="mt-4 bg-muted/40 rounded-md p-3 border border-border/50 space-y-3">
             {post.comments.map((comment: any, idx: number) => {
               const commentUserUrl = `https://tieba.baidu.com/home/main?id=${comment.portrait}`;
               return (
                 <div key={comment.cid || idx} className="flex gap-2 text-sm leading-relaxed group">
-                  {/* 🚀 楼中楼迷你头像跳转 */}
                   <a href={commentUserUrl} target="_blank" rel="noopener noreferrer" className="shrink-0 mt-0.5 hover:opacity-80 transition-opacity">
                     <img 
                       src={comment.portrait ? `https://gss0.baidu.com/7Ls0a8Sm2Q5IlBGlnYG/sys/portrait/item/${comment.portrait}` : '/favicon.ico'} 
@@ -280,8 +262,6 @@ function PostRow({ post, floor, keyword, isHost = false }: { post: any, floor: n
             })}
           </div>
         )}
-        
-        {/* 底部楼层元信息 */}
         <div className="flex justify-end items-center gap-4 mt-6 text-xs text-muted-foreground">
           <span>{floor} 楼</span>
           <span>{new Date(post.create_time).toLocaleString('zh-CN', { hour12: false })}</span>

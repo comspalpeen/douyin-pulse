@@ -1,4 +1,3 @@
-// src/hooks/useRadarScan.ts
 import { useState, useEffect, useCallback } from 'react';
 import { HighLevelFanItem } from '@/types/tools';
 import { triggerBlobDownload } from '@/lib/tools-utils';
@@ -42,7 +41,6 @@ export function useRadarScan(isActive: boolean) {
     let intervalId: NodeJS.Timeout;
     const checkScanStatus = async () => {
       try {
-        // 🌟 关键修复：禁用缓存 + 加上时间戳，强制每次都去后端拿最新数据
         const res = await fetch(
           `/api/tools/high-level/scan/status?task_id=${scanTaskId}&_t=${Date.now()}`, 
           { cache: 'no-store' }
@@ -57,7 +55,6 @@ export function useRadarScan(isActive: boolean) {
         
         if (data.status === 'completed') {
           setScanStatus('completed');
-          // 🌟 关键修复2：补上 1000ms 延迟，等数据库写入彻底完成再查，防止查空
           setTimeout(() => fetchDailyNewFans(queryDate), 1000); 
         } else if (data.status === 'failed') {
           setScanStatus('failed');
@@ -78,7 +75,7 @@ export function useRadarScan(isActive: boolean) {
     setErrorMessage('');
     setScanStatus('idle');
     setScanResults([]);
-    setScanMessage('正在初始化探测任务...'); // 🌟 重置消息
+    setScanMessage('正在初始化探测任务...'); // 重置消息
     try {
       const response = await fetch('/api/tools/high-level/scan/start', { method: 'POST' });
       if (!response.ok) throw new Error('启动扫描失败，请检查后端服务。');

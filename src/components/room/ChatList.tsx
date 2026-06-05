@@ -1,4 +1,3 @@
-// 文件位置: src/components/room/ChatList.tsx
 'use client';
 
 import React, { useRef, useEffect } from 'react';
@@ -70,7 +69,6 @@ export default function ChatList({ chats, loading, onLoadMore, jumpTime, highlig
                     return (
                         <div className="px-2 md:px-3 py-1.5">
                             <div className={`flex gap-3 group bg-card p-3 rounded-[var(--radius)] border transition-all shadow-sm hover:border-primary/40 ${isHighlighted ? 'bg-primary/5 border-primary/50 ring-1 ring-primary/50' : 'border-border'}`}>
-                                {/* ✅ 强制圆形头像 rounded-full，并阻止点击穿透 */}
                                 <div 
                                     className="relative w-10 h-10 shrink-0 cursor-pointer z-10" 
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToProfile(e, msg.sec_uid); }}
@@ -80,7 +78,6 @@ export default function ChatList({ chats, loading, onLoadMore, jumpTime, highlig
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center flex-wrap gap-y-1 mb-1">
                                         <BadgeIcons msg={msg} />
-                                        {/* ✅ 阻止点击穿透 */}
                                         <span 
                                             className="text-xs md:text-sm font-bold text-foreground truncate cursor-pointer hover:text-primary transition-colors max-w-[120px] uppercase [.theme-pink_&]:normal-case relative z-10" 
                                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); goToProfile(e, msg.sec_uid); }}

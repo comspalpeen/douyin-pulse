@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 
 import { 
   Search, Activity, Users, MessageSquare, Target, 
-  ShieldCheck, Wifi, Settings2, LayoutList, Rows3 
+  ShieldCheck, Wifi, Settings2, LayoutList, Rows3,ChevronLeft 
 } from "lucide-react";
 import { TiebaFeedItem } from "@/types/tieba";
 const HighlightText = ({ text, keyword }: { text: string; keyword: string }) => {
@@ -46,7 +46,7 @@ const RichTextRenderer = ({ rawContents, fallbackText, keyword }: { rawContents?
                   src={item.src} 
                   alt="情报图片" 
                   className="max-w-full sm:max-w-md rounded-md border-2 border-border/50 shadow-sm"
-                  referrerPolicy="no-referrer" // 💡 破解百度图片防盗链
+                  referrerPolicy="no-referrer"
                   loading="lazy"
                 />
               </div>
@@ -111,7 +111,7 @@ export default function TiebaMonitorPage() {
     }
   };
 
-  // 🚀 初始化：检查是否有缓存数据（从详情页返回时触发）
+  // 检查是否有缓存数据（从详情页返回时触发）
   useEffect(() => {
     fetchStats();
     const cacheStr = sessionStorage.getItem("tieba_feed_state");
@@ -136,10 +136,9 @@ export default function TiebaMonitorPage() {
     setInitialLoaded(true);
   }, []);
 
-  // 🚀 3. 修改监听页码的 useEffect
+  // 3. 修改监听页码的 useEffect
   useEffect(() => {
     if (initialLoaded && page > 1) {
-      // 🛑 核心拦截：如果是缓存恢复导致的页码变化，直接 return，不发起请求！
       if (isRestoringRef.current) {
         isRestoringRef.current = false; // 解开锁，让下一次正常滚动可以触发
         return;
@@ -148,7 +147,7 @@ export default function TiebaMonitorPage() {
     }
   }, [page, initialLoaded]);
 
-  // 🚀 用户主动点击搜索
+  // 用户点击搜索
   const handleSearch = () => {
     setKeyword(searchInput);
     setPage(1);
@@ -156,7 +155,7 @@ export default function TiebaMonitorPage() {
     fetchFeed(searchInput, 1, viewMode);
   };
 
-  // 🚀 用户主动切换模式
+  // 用户切换模式
   const handleViewModeChange = (mode: "grouped" | "flat") => {
     setViewMode(mode);
     setPage(1);
@@ -164,7 +163,7 @@ export default function TiebaMonitorPage() {
     fetchFeed(keyword, 1, mode);
   };
 
-  // 🚀 点击卡片跳转：瞬间封存现场
+  // 点击卡片跳转前瞬间封存现场
   const handleCardClick = (tid: string) => {
     sessionStorage.setItem("tieba_feed_state", JSON.stringify({
       keyword,
@@ -206,8 +205,19 @@ export default function TiebaMonitorPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 min-h-screen">
-      
-      {/* 模块一：仪表盘保持不变 */}
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/50">
+        <div className="flex items-center">
+          <button 
+            onClick={() => router.back()} 
+            className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary transition-colors group"
+          >
+            <ChevronLeft className="w-5 h-5 mr-1 transition-transform group-hover:-translate-x-1" />
+            返回
+          </button>
+          <div className="h-4 w-[1px] bg-border mx-4"></div> {/* 分割线 */}
+          <h1 className="text-lg font-bold text-foreground">贴吧监控大盘</h1>
+        </div>
+      </div>
       <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card data-slot="card" className="p-4 flex flex-col items-center justify-center border-border">
           <div className="flex items-center text-muted-foreground mb-1"><Target className="w-4 h-4 mr-1"/> 昨日主题帖</div>

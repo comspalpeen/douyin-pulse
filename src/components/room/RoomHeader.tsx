@@ -1,4 +1,3 @@
-// 文件位置: src/components/room/RoomHeader.tsx
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -110,11 +109,9 @@ export default function RoomHeader({ roomInfo, searchState, actions, onOpenStats
     };
 
     return (
-        // 🌟 核心对齐：外层 padding 和结构与 sec_uid 页面完全统一
+        // 核心对齐：外层 padding 和结构与 sec_uid 页面完全统一
         <header className="bg-card/90 backdrop-blur-md border-b border-border p-3 shadow-sm z-20 shrink-0 relative transition-colors duration-500">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 max-w-7xl mx-auto">
-                    
-                    {/* 🌟 左侧：返回与首页按钮组、标题 */}
                     <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1">
                         <button onClick={() => router.back()} title="返回上一页" className="text-muted-foreground hover:text-primary hover:bg-primary/10 p-1.5 transition-colors border border-transparent hover:border-primary/30 rounded-[var(--radius)]">
@@ -128,7 +125,7 @@ export default function RoomHeader({ roomInfo, searchState, actions, onOpenStats
                     <div className="flex flex-col cursor-pointer group p-1 -ml-1 transition-colors rounded-[var(--radius)] hover:bg-muted/50" onClick={onOpenStats}>
                         <div className="flex items-center gap-1">
                             <h1 className="font-black text-foreground truncate max-w-[150px] text-sm md:text-lg group-hover:text-primary transition-colors tracking-widest uppercase">
-                                {/* 👇 这里用的是 roomInfo，而不是 rooms */}
+                                {/* 这里用的是 roomInfo，而不是 rooms */}
                                 {roomInfo?.nickname || 'SYS_LOADING...'}
                             </h1>
                             <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -139,8 +136,6 @@ export default function RoomHeader({ roomInfo, searchState, actions, onOpenStats
                         </span>
                     </div>
                 </div>
-
-                {/* 🌟 右侧：高度全部统一为 h-9 (36px)，与左侧两行文字的视觉高度保持平衡 */}
                 <div className="flex flex-wrap items-center gap-2 flex-1 md:justify-end">
                     <div className="flex gap-0 w-full md:w-auto items-stretch h-9 shadow-sm rounded-[var(--radius)] overflow-hidden border border-input focus-within:ring-1 focus-within:ring-primary transition-all duration-500 bg-background">
                         <select 
@@ -155,7 +150,7 @@ export default function RoomHeader({ roomInfo, searchState, actions, onOpenStats
                         <div className="relative flex-1 md:w-48 bg-transparent">
                             <input 
                                 type="text" 
-                                className="block w-full h-full p-2 pr-7 text-xs md:text-sm text-foreground bg-transparent focus:outline-none placeholder:text-muted-foreground font-mono" 
+                                className="block w-full h-full p-2 pr-7 text-base md:text-sm text-foreground bg-transparent focus:outline-none placeholder:text-muted-foreground font-mono" 
                                 placeholder="关键词..." 
                                 value={inputSearch} 
                                 onChange={(e) => setInputSearch(e.target.value)} 
@@ -208,8 +203,6 @@ export default function RoomHeader({ roomInfo, searchState, actions, onOpenStats
                     </div>
                 </div>
             </div>
-
-            {/* 高级筛选浮窗 (保持原样) */}
             {isFilterOpen && (
                 <div ref={filterRef} className="absolute top-full right-2 mt-2 w-72 bg-card rounded-xl shadow-2xl border border-border p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
                     <h3 className="text-sm font-black text-foreground mb-4 flex justify-between items-center tracking-widest uppercase">

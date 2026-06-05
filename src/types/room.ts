@@ -1,4 +1,3 @@
-// src/types/room.ts
 
 export interface ChatMsg {
     user_name: string;
@@ -54,8 +53,6 @@ export interface PkTeam {
     anchors: PkAnchor[];
 }
 
-// 文件位置: src/types/room.ts (仅展示 PkBattle 接口部分，其余保持不变)
-
 export interface PkBattle {
     battle_id: string;
     start_time: string;
@@ -63,7 +60,7 @@ export interface PkBattle {
     mode: string;
     teams: PkTeam[];
     duration?: number;     // PK持续时间(秒)
-    created_at?: string;   // ✅ 新增：用于兜底计算结束时间
+    created_at?: string;
 }
 
 export interface LivePkAnchor {
@@ -100,27 +97,21 @@ export interface LivePkSnapshot {
 export interface RoomDetail {
     room_id: string;
     title: string;
-    user_id?: string; // 👈 🌟 必须加上这个！
-    sec_uid?: string; // 👈 🌟 建议一并加上，保持前后端统一！
+    user_id?: string;
+    sec_uid?: string;
     nickname: string;
     avatar_url?: string;
     cover_url?: string;
     live_status: number; // 1:直播中, 4:已结束
-    
-    // --- 基础统计 ---
     user_count: number;       // 当前在线
     max_viewers: number;      // 峰值在线
     total_user_count: number; // 累计观看
     like_count: number;       // 点赞
     follower_count: number;   // 粉丝
     follower_diff?: number;   // 涨粉
-    
-    // --- ✅ 新增补充数据 ---
     fans_ticket_count?: number; // 粉丝团灯牌
     total_chat_count?: number;  // 弹幕总数
     total_diamond_count?: number; // 钻石总数 (后端需聚合或估算)
-    
-    // --- 核心计算字段 ---
     total_watch_time_sec?: number; // 总观看时长(秒)
 
     created_at: string;

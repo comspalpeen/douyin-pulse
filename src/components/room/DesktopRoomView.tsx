@@ -1,4 +1,3 @@
-// 文件位置: src/components/room/DesktopRoomView.tsx
 'use client';
 import ChatList from './ChatList';
 import GiftList from './GiftList';
@@ -21,10 +20,7 @@ export default function DesktopRoomView({
 }: DesktopRoomViewProps) {
     return (
        <main className="hidden md:grid flex-1 max-w-7xl w-full mx-auto p-4 grid-cols-3 gap-6 overflow-hidden animate-in fade-in duration-300">
-            {/* 左侧主视觉：使用 bg-card 和 border-border 响应主题 */}
             <div className="col-span-2 bg-card rounded-[var(--radius)] border border-border shadow-sm flex flex-col overflow-hidden relative transition-colors duration-500">
-                
-                {/* 装饰性战术边角 */}
                 <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary/40 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity"></div>
                 <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary/40 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity"></div>
 
@@ -46,7 +42,6 @@ export default function DesktopRoomView({
                 <div className="flex-1 overflow-hidden relative min-h-0">
                     {tab === 'chat' && (
                         <div className="absolute inset-0 flex flex-col">
-                            {/* ✅ 弹幕区去掉了次级标题，保持极简悬浮风格 */}
                             <div className="flex-1 min-h-0 bg-background transition-colors duration-500 relative">
                                 <div className="absolute top-3 right-4 z-50 flex gap-2 items-center pointer-events-none">
                                     {data.loadingChats && !jumpTime && <span className="text-[10px] font-black tracking-widest text-primary/50 animate-pulse bg-background/80 px-2 py-1 rounded backdrop-blur-sm">Scanning...</span>}
@@ -63,14 +58,11 @@ export default function DesktopRoomView({
                     {tab === 'pk' && <PkList roomId={data.roomId} roomUserId={data.roomInfo?.user_id} pks={data.pks} loading={data.loadingPks} onRefreshPks={data.reloadPks} liveStatus={data.roomInfo?.live_status}/>}
                 </div>
             </div>
-            
-            {/* 右侧边栏：常驻礼物区 */}
             <div className="bg-card rounded-[var(--radius)] border border-border flex flex-col overflow-hidden relative shadow-sm transition-colors duration-500">
                 <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-primary/40 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity"></div>
                 <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary/40 pointer-events-none opacity-100 [.theme-pink_&]:opacity-0 transition-opacity"></div>
 
                 <div className="flex-1 overflow-hidden relative min-h-0 flex flex-col">
-                    {/* ✅ 恢复礼物区的主标题栏！不让它变成“无名氏” */}
                     <div className="p-3 border-b border-border bg-muted/20 flex justify-between items-center h-[48px] shrink-0 z-10 transition-colors duration-500">
                         <span className="font-bold text-xs tracking-widest text-foreground flex items-center gap-2">
                             <Gift className="w-4 h-4 text-primary"/> 礼物

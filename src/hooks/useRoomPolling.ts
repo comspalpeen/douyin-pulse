@@ -1,7 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { RoomDetail } from '@/types/room';
-
-// ✅ 修改：增加 isHistoryMode 参数，用于彻底关闭轮询
 export function useRoomDetail(roomId: string, isHistoryMode: boolean = false) {
     return useQuery<RoomDetail>({
         queryKey: ['room', roomId, 'detail'],
@@ -10,7 +8,7 @@ export function useRoomDetail(roomId: string, isHistoryMode: boolean = false) {
             if (!res.ok) throw new Error('Failed to fetch room info');
             return res.json();
         },
-        // ✅ 核心修复：智能轮询策略
+        // 核心修复：智能轮询策略
         refetchInterval: (query) => {
             // 1. 如果是历史回放模式，绝对不轮询
             if (isHistoryMode) return false;

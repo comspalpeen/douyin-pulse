@@ -1,4 +1,3 @@
-// 文件位置: src/app/author/[sec_uid]/page.tsx
 'use client';
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -15,7 +14,7 @@ import {
 interface Room {
     room_id: string;
     title: string;
-    nickname?: string; // 👈 新增这一行
+    nickname?: string;
     cover_url?: string;
     created_at: string;
     end_time?: string;
@@ -211,7 +210,7 @@ export default function AuthorDetailPage() {
                         targetQuery = data[0].sec_uid;
                         displayKeyword = data[0].user_name;
                     } else {
-                        // 🚨 拦截模糊搜索：没找到用户直接返回空，因为后端已不再支持文本搜索
+                        // 拦截模糊搜索：没找到用户直接返回空，因为后端已不再支持文本搜索
                         setSearchResults([]);
                         setHasSearched(true);
                         setIsSearching(false);
@@ -257,12 +256,8 @@ export default function AuthorDetailPage() {
 
     return (
         <div className="h-screen bg-background flex flex-col overflow-hidden animate-in fade-in duration-300">
-            
-            {/* 🌟 核心：统一 Header 布局，完全复用 RoomHeader 的 DOM 结构和样式 */}
             <header className="bg-card/90 backdrop-blur-md border-b border-border p-3 shadow-sm z-20 shrink-0 relative transition-colors duration-500">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 max-w-7xl mx-auto">
-                    
-                    {/* 🌟 左侧：返回与首页按钮组、标题 */}
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1">
                             <button onClick={() => router.back()} title="返回上一页" className="text-muted-foreground hover:text-primary hover:bg-primary/10 p-1.5 transition-colors border border-transparent hover:border-primary/30 rounded-[var(--radius)]">
@@ -372,14 +367,9 @@ export default function AuthorDetailPage() {
                     )}
                 </div>
             </main>
-
-            {/* ================= 高级检索弹窗 (Modal) ================= */}
             {isSearchModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-2 md:p-6 animate-in fade-in duration-200">
-                    {/* 🌟 核心修改：将 max-h-[90vh] 改为固定的 h-[90vh]，并把宽度扩大到 max-w-5xl */}
                     <div className="bg-card border border-border shadow-2xl rounded-2xl w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden relative" ref={searchRef}>
-                        
-                        {/* 弹窗 Header */}
                         <div className="px-6 py-4 border-b border-border bg-muted/30 flex items-center justify-between shrink-0">
                             <h2 className="text-lg font-black tracking-widest uppercase flex items-center gap-2">
                                 <Search className="w-5 h-5 text-primary" /> 房间检索
@@ -388,8 +378,6 @@ export default function AuthorDetailPage() {
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-
-                        {/* 弹窗控制栏 */}
                         <div className="p-4 border-b border-border bg-background z-20 shrink-0">
                             <div className="flex flex-col md:flex-row gap-4 items-center">
                                 <form onSubmit={handleSearchSubmit} className="flex-1 flex gap-2 w-full relative">
@@ -406,14 +394,12 @@ export default function AuthorDetailPage() {
                                             value={keyword}
                                             onChange={e => {
                                                 setKeyword(e.target.value);
-                                                setResolvedName(''); // 👈 新增：手动输入立刻解锁
+                                                setResolvedName('');
                                             }}
                                             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                                         />
                                     </div>
                                     <Button type="submit" className="h-11 px-8 rounded-xl font-bold shadow-sm whitespace-nowrap">检索</Button>
-
-                                    {/* 联想下拉框 */}
                                     {showSuggestions && suggestions.length > 0 && (
                                         <div className="absolute top-14 left-0 w-[calc(100%-100px)] bg-card border border-primary/50 rounded-xl shadow-xl z-50 overflow-hidden flex flex-col max-h-72 overflow-y-auto">
                                             <div className="text-[10px] text-muted-foreground bg-muted/50 px-4 py-2 font-mono border-b border-border font-bold">MATCHED_USERS</div>
@@ -443,8 +429,6 @@ export default function AuthorDetailPage() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* 弹窗内容区 (列表) */}
                         <div className="flex-1 overflow-y-auto p-4 bg-muted/10 custom-scrollbar relative">
                             {isSearching && page === 1 ? (
                                 <div className="text-center py-20 flex flex-col items-center">
@@ -479,7 +463,6 @@ export default function AuthorDetailPage() {
                                                         <div className="bg-orange-500/10 border border-orange-500/30 px-3 py-2 rounded-lg text-sm text-orange-500/90 leading-relaxed shadow-inner flex items-center gap-2">
                                                             {item.gift_icon && <img src={item.gift_icon} alt="gift" className="w-5 h-5 object-contain" />}
                                                             <span className="font-bold truncate">送出了 {item.content}
-                                                                {/* 👇 增加高亮显示的数量 */}
                                                                 {item.gift_count && item.gift_count > 0 && (
                                                                     <span className="font-black text-orange-600 ml-1 drop-shadow-sm">x{item.gift_count}</span>
                                                                 )}</span>

@@ -1,4 +1,3 @@
-// components/tieba/TiebaFeedCard.tsx
 import { TiebaFeedItem } from '@/types/tieba';
 
 interface Props {
@@ -34,7 +33,6 @@ export default function TiebaFeedCard({ item, keyword, onClick }: Props) {
       className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md hover:border-blue-300 transition-all duration-200 group"
     >
       <div className="p-4 flex flex-col gap-3">
-        {/* 来源信息 */}
         <div className="flex justify-between items-center text-xs text-gray-500">
           <span className="font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">
             {item.fname}吧
@@ -44,8 +42,6 @@ export default function TiebaFeedCard({ item, keyword, onClick }: Props) {
             {timeStr}
           </span>
         </div>
-
-        {/* 帖子标题 */}
         <h3 className="text-base font-bold text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2">
           {item.thread_title}
         </h3>

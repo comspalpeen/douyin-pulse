@@ -34,7 +34,6 @@ export default function RadarPanel(props: RadarPanelProps) {
   return (
     <div className="space-y-4 w-full">
       <div className="flex flex-col gap-4 p-5 bg-card rounded-[1.5rem] border border-border shadow-sm">
-        {/* 爬虫同步与全量 */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
           <div className="space-y-1 flex-1 min-w-[200px]">
             <h3 className="font-bold text-foreground flex items-center gap-2">
@@ -57,8 +56,6 @@ export default function RadarPanel(props: RadarPanelProps) {
             </Button>
           </div>
         </div>
-
-        {/* 按日查询提取 */}
         <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
           <div className="flex items-center gap-3">
             <label className="text-sm font-semibold text-foreground flex items-center gap-1.5">
@@ -82,8 +79,6 @@ export default function RadarPanel(props: RadarPanelProps) {
           {errorMessage}
         </div>
       )}
-
-      {/* 结果池渲染 */}
       <div className="rounded-[1.75rem] border border-border bg-background/40 p-4 md:p-5 mt-6">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <h2 className="text-lg font-black tracking-tight text-foreground flex items-center gap-2">

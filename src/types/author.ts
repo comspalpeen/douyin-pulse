@@ -7,5 +7,5 @@ export interface Author {
   live_status: number; 
   web_rid?: string;
   user_count: number;
-  follower_count: number; // ✅ 新增
+  follower_count: number;
 }

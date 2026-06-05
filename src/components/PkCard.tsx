@@ -1,4 +1,3 @@
-// 文件位置: src/components/PkCard.tsx
 'use client';
 
 import React from 'react';
@@ -19,10 +18,7 @@ const extractDate = (val: any): string => {
 };
 
 const PkCard: React.FC<PkCardProps> = ({ pk, roomUserId }) => {
-    
-    // ==========================================
     // 1. 工具函数：时间显示
-    // ==========================================
     const getTimeDisplay = () => {
         const startRaw = extractDate(pk.start_time);
         if (!startRaw) return '未知时间';
@@ -51,10 +47,7 @@ const PkCard: React.FC<PkCardProps> = ({ pk, roomUserId }) => {
         }
         return startStr;
     };
-
-    // ==========================================
     // 2. 工具函数：点击跳转抖音
-    // ==========================================
     const handleAvatarClick = async (e: React.MouseEvent, uid: string) => {
         e.stopPropagation();
         e.preventDefault();
@@ -72,17 +65,11 @@ const PkCard: React.FC<PkCardProps> = ({ pk, roomUserId }) => {
             newWindow?.close();
         }
     };
-
-    // ==========================================
     // 3. 核心判定：模式识别
-    // ==========================================
     const totalAnchorsCount = pk.teams.reduce((acc, t) => acc + t.anchors.length, 0);
     const isRankMode = pk.teams.length > 2 || pk.mode === 'rank' || pk.mode === 'free_for_all';
     const isTeamVsMode = pk.teams.length === 2 && totalAnchorsCount > 2;
-
-    // ==========================================
     // 4. 渲染子组件：贡献榜
-    // ==========================================
     const renderContributorList = (list: PkContributor[]) => {
         if (!list || list.length === 0) return <div className="text-[10px] text-muted-foreground mt-1 text-center py-1">暂无贡献</div>;
         return (
@@ -102,10 +89,7 @@ const PkCard: React.FC<PkCardProps> = ({ pk, roomUserId }) => {
             </div>
         );
     };
-
-    // ==========================================
     // 5. 渲染分支 A：多人排名赛 (含主播高亮)
-    // ==========================================
     if (isRankMode) {
         const allAnchors = pk.teams.flatMap(t => t.anchors);
         const sortedAnchors = allAnchors.sort((a, b) => b.score - a.score);
@@ -149,16 +133,10 @@ const PkCard: React.FC<PkCardProps> = ({ pk, roomUserId }) => {
             </Card>
         );
     }
-
-    // ==========================================
     // 6. 渲染分支 B：VS 对决 (1V1 / 组队)
-    // ==========================================
-    
     // 使用 let 以允许在判定后交换
     let teamA = pk.teams[0];
     let teamB = pk.teams[1] || { anchors: [], win_status: 0, team_id: '0' };
-
-    // 👈 核心逻辑：计算前先交换，确保主播永远在 A 队（左侧）
     if (roomUserId) {
         const isStreamerInRight = teamB.anchors?.some(a => String(a.user_id) === String(roomUserId));
         if (isStreamerInRight) {
